@@ -69,12 +69,14 @@ export class AccessControlPolicyManager {
         }
     }
 
-    async checkPrivileges(originator, acpi) {
+    async checkPrivileges(originator, acpi, isAcpResource = false) {
         let operationsBinary = "";
 
+        const privAttr = isAcpResource ? "pvs" : "pv"
+
         const acp:AccessControlPolicy = this.acpRepository.findOneBy({ri: acpi});
-        for (let i=0; i<acp.pv.length; i++){
-            if (acp.pv[i].acor === originator){
+        for (let i=0; i<acp[privAttr].length; i++){
+            if (acp[privAttr][i].acor === originator){
                 operationsBinary = dec2bin(acp.pv[i].acop);
                 return new Map([
                     [operationEnum.CREATE, operationsBinary.charAt(5) === "1"],
