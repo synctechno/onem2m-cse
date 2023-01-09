@@ -5,7 +5,11 @@ export function getContentSize (obj: Object): number{
     let size = 0;
     for (const [key, value] of Object.entries(obj)){
         size += key.length;
-        size += value.length;
+        if (typeof(value) == "number"){
+            size += 8
+        } else if (typeof(value) == "string") {
+            size += value.length;
+        }
     }
     return size;
 }
