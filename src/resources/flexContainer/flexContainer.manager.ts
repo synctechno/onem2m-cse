@@ -5,6 +5,13 @@ import {FlexContainerRepository} from "./flexContainer.repository.js";
 import {LookupRepository} from "../lookup/lookup.repository.js";
 import {nanoid} from "nanoid";
 import {getContentSize} from "../../utils.js";
+import { TypeCompiler } from '@sinclair/typebox/compiler'
+import {sdtSchemaCreate, sdtSchemaUpdate} from "../../types/sdt.js";
+
+const sdtCreateValidator = TypeCompiler.Compile(sdtSchemaCreate);
+const sdtUpdateValidator = TypeCompiler.Compile(sdtSchemaUpdate);
+
+
 
 export class FlexContainerManager {
     private flexContainerRepository;
@@ -18,7 +25,22 @@ export class FlexContainerManager {
     async primitiveHandler(primitive: requestPrimitive, targetResource): Promise<responsePrimitive> {
         switch (primitive["m2m:rqp"].op){
             case operationEnum.CREATE: {
-                const {rn, cnd, ...ca} = primitive["m2m:rqp"]["pc"]["m2m:fcnt"];
+                const prefix = Object.keys(primitive["m2m:rqp"]["pc"])[0];
+                //validate as per SDT schema if prefix is not m2m:fcnt
+                if (prefix !== "m2m:fcnt") {
+                    if (!sdtCreateValidator.Check(primitive["m2m:rqp"]["pc"])){
+                        return {
+                            "m2m:rsp": {
+                                rsc: 5000,
+                                rqi: primitive["m2m:rqp"].ri,
+                                rvi: primitive["m2m:rqp"].rvi,
+                                ot: new Date(),
+                                pc: undefined
+                            }
+                        }
+                    }
+                }
+                const {rn, cnd, ...ca} = primitive["m2m:rqp"]["pc"][prefix];
                 const ri = nanoid(8)
                 //copy without reference
                 let resource = {
@@ -33,7 +55,8 @@ export class FlexContainerManager {
                 const {ca: caFromDb, ...rest} = await this.flexContainerRepository.save(resource);
                 await this.lookupRepository.save({
                     ri,
-                    path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:fcnt"].rn,
+                    pi: targetResource.ri,
+                    path: targetResource.path + '/' + primitive["m2m:rqp"].pc[prefix].rn,
                     ty: resourceTypeEnum.flexContainer
                 })
 
@@ -58,12 +81,27 @@ export class FlexContainerManager {
                         rvi: primitive["m2m:rqp"].rvi,
                         ot: new Date(),
                         ty: targetResource.ty,
-                        pc: {...rest, ...caFromDb}
+                        pc: {"m2m:fcnt": {...rest, ...caFromDb}}
                     }
                 }
             }
             case operationEnum.UPDATE: {
-                const {rn, cnd, ...ca} = primitive["m2m:rqp"]["pc"]["m2m:fcnt"];
+                const prefix = Object.keys(primitive["m2m:rqp"]["pc"])[0];
+                //validate as per SDT schema if prefix is not m2m:fcnt
+                if (prefix !== "m2m:fcnt") {
+                    if (!sdtUpdateValidator.Check(primitive["m2m:rqp"]["pc"])){
+                        return {
+                            "m2m:rsp": {
+                                rsc: 5000,
+                                rqi: primitive["m2m:rqp"].ri,
+                                rvi: primitive["m2m:rqp"].rvi,
+                                ot: new Date(),
+                                pc: undefined
+                            }
+                        }
+                    }
+                }
+                const {rn, cnd, ...ca} = primitive["m2m:rqp"]["pc"][prefix];
 
                 let resource = await this.flexContainerRepository.findOneBy({ri: targetResource.ri});
                 let {ca: caFromDb, ...rest} = resource;
@@ -88,7 +126,7 @@ export class FlexContainerManager {
                         rvi: primitive["m2m:rqp"].rvi,
                         ot: new Date(),
                         ty: targetResource.ty,
-                        pc: {...savedRest, ...savedCa}
+                        pc: {"m2m:fcnt": {...savedRest, ...savedCa}}
                     }
                 }
             }
