@@ -35,7 +35,7 @@ export class Dispatcher {
         this.subscriptionManager = new SubscriptionManager();
     }
 
-    private static makeResponse({rsc, rqi, rvi, ot, pc}): responsePrimitive {
+    private static makeResponse({rsc, rqi, rvi, ot = new Date(), pc}): responsePrimitive {
         return {
             "m2m:rsp": {
                 rsc,
@@ -70,10 +70,27 @@ export class Dispatcher {
                     pc: ""
                 })
             }
+
+            //resource with the same resourceName exists
+            const siblingResources = await this.lookupRepository.findBy({pi: targetResource.ri});
+            for (const resource of siblingResources){
+                let rn = resource.path.split('/').at(-1);
+                const prefix = Object.keys(requestPrimitive["m2m:rqp"]["pc"])[0]
+                if (requestPrimitive["m2m:rqp"]["pc"][prefix].rn === rn){
+                    return Dispatcher.makeResponse({
+                        rsc: 4000, //TODO add correct error code
+                        rqi: requestPrimitive["m2m:rqp"].ri,
+                        rvi: requestPrimitive["m2m:rqp"].rvi,
+                        ot: new Date(),
+                        pc: ""
+                    })
+                }
+            }
         }
         //check permissions if acpi exists
-        if (targetResource.acpi) {
-            const operationPrivileges = this.acpManager.checkPrivilges(requestPrimitive["m2m:rqp"].fr)
+        if (targetResource.acpi && targetResource.ty !== resourceTypeEnum.accessControlPolicy) {
+            const operationPrivileges =
+                this.acpManager.checkPrivilges(requestPrimitive["m2m:rqp"].fr)
             if (!operationPrivileges.get(requestPrimitive["m2m:rqp"].op)) {
                 return Dispatcher.makeResponse({
                     rsc: 5000, //TODO add correct error code
@@ -83,6 +100,8 @@ export class Dispatcher {
                     pc: ""
                 })
             }
+        } else if (targetResource.ty === resourceTypeEnum.accessControlPolicy){
+            const operationPrivileges = this.acpManager.checkPrivilges(requestPrimitive["m2m:rqp"].fr)
         }
 
         const targetResourceType: resourceTypeEnum = requestPrimitive["m2m:rqp"].op === operationEnum.CREATE ?
