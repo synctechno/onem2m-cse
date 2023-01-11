@@ -1,5 +1,5 @@
 import {operationEnum, requestPrimitive, responsePrimitive} from "./types/primitives.js";
-import {prefixMapType, resourceTypeEnum} from "./types/types.js";
+import {filterCriteria, prefixMapType, resourceTypeEnum} from "./types/types.js";
 import {resourceTypeToPrefix} from "./utils.js";
 
 export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
@@ -10,23 +10,36 @@ export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
         "DELETE": operationEnum.DELETE
     }
     const op = methodToOp[req.method];
+    const urlParts = req.url.split('?');
+    const conditions = urlParts[1].split('&')
+    const filterCriteria = {
+
+    }
+    for (const condition of conditions){
+        const parts = condition.split('=');
+        const conditionKey = parts[0];
+        const conditionValue = parts[1];
+        filterCriteria[conditionKey] = conditionValue;
+    }
     return {
         "m2m:rqp": {
             op,
-            to: req.url,
+            to: urlParts[0],
             fr: req.headers['x-m2m-origin'],
             ri: req.headers['x-m2m-ri'],
             rvi: req.headers['x-m2m-rvi'],
             ty: ty,
-            pc: req.body
+            pc: req.body,
+            fc: filterCriteria as filterCriteria
         }
     }
 }
 
 export function primitiveToHtpp(primitive: responsePrimitive) {
-    let body;
-    const prefix:any = resourceTypeToPrefix.get(primitive["m2m:rsp"].ty);
-    body = {[prefix]: primitive["m2m:rsp"].pc}
+    // let body;
+    // const prefix:any = resourceTypeToPrefix.get(primitive["m2m:rsp"].ty);
+    // body = {[prefix]: primitive["m2m:rsp"].pc}
+    const body = primitive["m2m:rsp"].pc;
 
     return {
         headers: {

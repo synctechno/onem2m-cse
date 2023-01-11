@@ -30,6 +30,7 @@ export class AccessControlPolicyManager {
             const data = await this.acpRepository.save(resource);
             await this.lookupRepository.save({
                 ri: ri,
+                pi: targetResource.ri,
                 path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:acp"].rn,
                 ty: resourceTypeEnum.accessControlPolicy })
 
@@ -40,7 +41,7 @@ export class AccessControlPolicyManager {
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
                     ty: primitive["m2m:rqp"].ty,
-                    pc: data
+                    pc: {"m2m:acp": data}
                 }
             }
         }
@@ -53,7 +54,7 @@ export class AccessControlPolicyManager {
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
                     ty: targetResource.ty,
-                    pc: resource
+                    pc: {"m2m:ae": resource}
                 }
             }
         } else {

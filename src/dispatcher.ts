@@ -1,7 +1,7 @@
 import {operationEnum, requestPrimitive, responsePrimitive} from "./types/primitives.js";
 import dataSource from "./database.js";
 import {LookupRepository} from "./resources/lookup/lookup.repository.js";
-import {notificationEventType, resourceTypeEnum, resourceTypeEnum as ty} from "./types/types.js";
+import {filterCriteria, notificationEventType, resourceTypeEnum, resourceTypeEnum as ty} from "./types/types.js";
 import {AeManager} from "./resources/ae/ae.manager.js";
 import {AccessControlPolicyManager} from "./resources/accessControlPolicy/accessControlPolicy.manager.js";
 import {FlexContainerManager} from "./resources/flexContainer/flexContainer.manager.js";
@@ -11,6 +11,7 @@ import {cseConfig} from "./configs/cse.config.js";
 import {request} from "./bindings/mqtt/request.js";
 import {nanoid} from "nanoid";
 import {resourceTypeToPrefix} from "./utils.js";
+import {Lookup} from "./resources/lookup/lookup.entity";
 
 const allowedChildResources = new Map([
     [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
@@ -107,6 +108,18 @@ export class Dispatcher {
         const targetResourceType: resourceTypeEnum = requestPrimitive["m2m:rqp"].op === operationEnum.CREATE ?
             requestPrimitive["m2m:rqp"].ty : targetResource.ty
 
+        if (requestPrimitive["m2m:rqp"].op === operationEnum.RETRIEVE && requestPrimitive["m2m:rqp"].fc){
+            const pc = await this.discoveryProcedure(requestPrimitive["m2m:rqp"].fc, targetResource.ri);
+            if (pc){
+                return Dispatcher.makeResponse({
+                    rsc: 2001, //TODO add correct error code
+                    rqi: requestPrimitive["m2m:rqp"].ri,
+                    rvi: requestPrimitive["m2m:rqp"].rvi,
+                    pc: pc
+                })
+            }
+        }
+
         let responsePrim: responsePrimitive;
 
         switch (targetResourceType) {
@@ -180,6 +193,35 @@ export class Dispatcher {
     }
 
     sendNotification(sub: Subscription) {
+
+    }
+
+    async discoveryProcedure(fc: filterCriteria, pi: string) {
+        switch (Number(fc.fu)) {
+            case 1: { //discovery
+                const result: Lookup[] = await this.lookupRepository.findBy({pi});
+                if (Number(fc?.rcn) === 8) {
+                    let pc: Object = {
+                        "m2m:rrl": {
+                            "m2m:rrf": []
+                        }
+                    };
+                    for (const resourceLookup of result) {
+                        let rn = resourceLookup.path.split('/').at(-1);
+                        pc["m2m:rrl"]["m2m:rrf"].push(
+                            {
+                                nm: rn,
+                                typ: resourceLookup.ty,
+                                val: resourceLookup.path
+                            }
+                        )
+                    }
+                    return pc;
+                } else {
+                    return null;
+                }
+            }
+        }
 
     }
 }

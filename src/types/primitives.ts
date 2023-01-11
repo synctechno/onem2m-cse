@@ -1,5 +1,5 @@
 import {Type} from "@sinclair/typebox";
-import {resourceType, resourceTypeEnum} from "./types.js";
+import {filterCriteria, resourceType, resourceTypeEnum} from "./types.js";
 
 export enum operationEnum{
     CREATE = 1,
@@ -28,6 +28,7 @@ export type requestPrimitive = {
         rvi: string
         ty: resourceTypeEnum,
         pc?: any
+        fc?: filterCriteria //TODO define exact parameters
     }
 }
 

@@ -9,6 +9,8 @@ export class Lookup {
     @PrimaryColumn()
     readonly ri: string;
     @Column()
+    readonly pi: string;
+    @Column()
     readonly path: string;
     @Column({
         type: "enum",

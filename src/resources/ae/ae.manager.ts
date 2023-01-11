@@ -47,6 +47,7 @@ export class AeManager{
             const data = await this.aeRepository.save(resource);
             await this.lookupRepository.save({
                 ri: primitive["m2m:rqp"].fr,
+                pi: targetResource.ri,
                 path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:ae"].rn,
                 ty: resourceTypeEnum.AE })
 
@@ -57,7 +58,7 @@ export class AeManager{
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
                     ty: primitive["m2m:rqp"].ty,
-                    pc: data
+                    pc: {"m2m:ae": data}
                 }
             }
         }
@@ -70,7 +71,7 @@ export class AeManager{
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
                     ty: targetResource.ty,
-                    pc: resource
+                    pc: {"m2m:ae": resource}
                 }
             }
         } else {

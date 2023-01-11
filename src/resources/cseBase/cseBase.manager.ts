@@ -60,7 +60,7 @@ export class CseBaseManager{
                     rqi: primitive["m2m:rqp"].ri,
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
-                    pc: data
+                    pc: {"m2m:cb": data}
                 }
             }
         } else {

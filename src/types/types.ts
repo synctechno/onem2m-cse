@@ -103,6 +103,12 @@ enum filterOperation {
     OR
 }
 
+//TODO the type needs to be completed
+export type filterCriteria = {
+    fu: number //filterUsage
+    rcn: number //response content
+}
+
 export type prefixMapType = Map<resourceTypeEnum, string>;
 
 type atLeastOne<T, U = {[K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]
