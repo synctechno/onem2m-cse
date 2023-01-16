@@ -6,6 +6,8 @@ import {Lookup} from "./resources/lookup/lookup.entity.js";
 import {AccessControlPolicy} from "./resources/accessControlPolicy/accessControlPolicy.entity.js";
 import {FlexContainer} from "./resources/flexContainer/flexContainer.entity.js";
 import {Subscription} from "./resources/subscription/subscription.entity.js";
+import {Container} from "./resources/container/container.entity.js";
+import {ContentInstance} from "./resources/contentInstance/contentInstance.entity.js";
 
 const CseDataSource = new DataSource({
     type: "postgres",
@@ -20,7 +22,9 @@ const CseDataSource = new DataSource({
         AE,
         AccessControlPolicy,
         FlexContainer,
-        Subscription
+        Subscription,
+        Container,
+        ContentInstance
     ],
     synchronize: true
 })

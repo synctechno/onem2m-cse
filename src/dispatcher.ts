@@ -11,7 +11,10 @@ import {cseConfig} from "./configs/cse.config.js";
 import {request} from "./bindings/mqtt/request.js";
 import {nanoid} from "nanoid";
 import {resourceTypeToPrefix} from "./utils.js";
-import {Lookup} from "./resources/lookup/lookup.entity";
+import {Lookup} from "./resources/lookup/lookup.entity.js";
+import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
+import {ContainerManager} from "./resources/container/container.manager.js";
+import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
 
 const allowedChildResources = new Map([
     [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
@@ -19,6 +22,8 @@ const allowedChildResources = new Map([
     [ty.accessControlPolicy, [ty.subscription]],
     [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container]],
     [ty.subscription, []],
+    [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription]],
+    [ty.contentInstance, []]
 ]);
 
 export class Dispatcher {
@@ -27,6 +32,8 @@ export class Dispatcher {
     private acpManager;
     private flexContainerManager;
     private subscriptionManager;
+    private containerManager;
+    private contentInstanceManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -34,6 +41,8 @@ export class Dispatcher {
         this.acpManager = new AccessControlPolicyManager();
         this.flexContainerManager = new FlexContainerManager();
         this.subscriptionManager = new SubscriptionManager();
+        this.containerManager = new ContainerManager();
+        this.contentInstanceManager = new ContentInstanceManager()
     }
 
     private static makeResponse({rsc, rqi, rvi, ot = new Date(), pc}): responsePrimitive {
@@ -137,6 +146,14 @@ export class Dispatcher {
             }
             case ty.subscription: {
                 responsePrim = await this.subscriptionManager.primitiveHandler(requestPrimitive, targetResource);
+                break;
+            }
+            case ty.container: {
+                responsePrim = await this.containerManager.primitiveHandler(requestPrimitive, targetResource);
+                break;
+            }
+            case ty.contentInstance: {
+                responsePrim = await this.contentInstanceManager.primitiveHandler(requestPrimitive, targetResource);
                 break;
             }
             default:

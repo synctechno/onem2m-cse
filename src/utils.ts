@@ -1,16 +1,21 @@
 import {prefixMapType, resourceTypeEnum} from "./types/types.js";
 
 //contentSize in bytes assuming UTF-8 encoding (1 byte)
-export function getContentSize (obj: Object): number{
+export function getContentSize (data: Object | string): number{
     let size = 0;
-    for (const [key, value] of Object.entries(obj)){
-        size += key.length;
-        if (typeof(value) == "number"){
-            size += 8
-        } else if (typeof(value) == "string") {
-            size += value.length;
+    if (typeof (data) == 'object'){
+        for (const [key, value] of Object.entries(data)){
+            size += key.length;
+            if (typeof(value) == "number"){
+                size += 8
+            } else if (typeof(value) == "string") {
+                size += value.length;
+            }
         }
+    } else {
+        size = data.length;
     }
+
     return size;
 }
 
