@@ -10,6 +10,6 @@ export const headerSchema = Type.Object({
         Type.Literal("3"),
         Type.Literal("4")
     ]),
-    "Content-Type": Type.String(),
+    "Content-Type": Type.Optional(Type.String()),
     "Accept": Type.Literal("application/json")
 })

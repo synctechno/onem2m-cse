@@ -1,10 +1,10 @@
-import Fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
+import Fastify, {FastifyInstance} from 'fastify';
 import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {cseConfig} from "./configs/cse.config.js";
 import {deleteRoute, getRoute, postRoute, putRoute} from "./bindings/http/routes.js";
 import {TypeBoxTypeProvider} from "@fastify/type-provider-typebox";
 
-const server: FastifyInstance = Fastify({}).withTypeProvider<TypeBoxTypeProvider>()
+const server: FastifyInstance = Fastify({logger: true}).withTypeProvider<TypeBoxTypeProvider>()
 
 const start = async (): Promise<void>  => {
     try {

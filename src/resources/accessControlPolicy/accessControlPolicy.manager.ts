@@ -54,7 +54,7 @@ export class AccessControlPolicyManager {
                     rvi: primitive["m2m:rqp"].rvi,
                     ot: new Date(),
                     ty: targetResource.ty,
-                    pc: {"m2m:ae": resource}
+                    pc: {"m2m:acp": resource}
                 }
             }
         } else {
@@ -75,7 +75,7 @@ export class AccessControlPolicyManager {
 
         const privAttr = isAcpResource ? "pvs" : "pv"
 
-        const acp:AccessControlPolicy = this.acpRepository.findOneBy({ri: acpi});
+        const acp:AccessControlPolicy = await this.acpRepository.findOneBy({ri: acpi});
         for (let i=0; i<acp[privAttr].length; i++){
             if (acp[privAttr][i].acor === originator){
                 operationsBinary = dec2bin(acp.pv[i].acop);

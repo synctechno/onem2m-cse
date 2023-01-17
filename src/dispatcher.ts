@@ -28,6 +28,7 @@ const allowedChildResources = new Map([
 
 export class Dispatcher {
     private lookupRepository;
+    private cseBaseManager;
     private aeManager;
     private acpManager;
     private flexContainerManager;
@@ -37,6 +38,7 @@ export class Dispatcher {
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
+        this.cseBaseManager = new CseBaseManager()
         this.aeManager = new AeManager();
         this.acpManager = new AccessControlPolicyManager();
         this.flexContainerManager = new FlexContainerManager();
@@ -111,14 +113,14 @@ export class Dispatcher {
                 })
             }
         } else if (targetResource.ty === resourceTypeEnum.accessControlPolicy){
-            const operationPrivileges = this.acpManager.checkPrivilges(requestPrimitive["m2m:rqp"].fr)
+            const operationPrivileges = this.acpManager.checkPrivileges(requestPrimitive["m2m:rqp"].fr)
         }
 
         const targetResourceType: resourceTypeEnum = requestPrimitive["m2m:rqp"].op === operationEnum.CREATE ?
             requestPrimitive["m2m:rqp"].ty : targetResource.ty
 
-        if (requestPrimitive["m2m:rqp"].op === operationEnum.RETRIEVE && requestPrimitive["m2m:rqp"].fc){
-            const pc = await this.discoveryProcedure(requestPrimitive["m2m:rqp"].fc, targetResource.ri);
+        if (requestPrimitive["m2m:rqp"].op === operationEnum.RETRIEVE && Object.keys(requestPrimitive["m2m:rqp"].fc as Object).length !== 0){
+            const pc = await this.discoveryProcedure(requestPrimitive["m2m:rqp"].fc!, targetResource.ri);
             if (pc){
                 return Dispatcher.makeResponse({
                     rsc: 2001, //TODO add correct error code
@@ -132,6 +134,10 @@ export class Dispatcher {
         let responsePrim: responsePrimitive;
 
         switch (targetResourceType) {
+            case ty.CSEBase: {
+                responsePrim = await this.cseBaseManager.primitiveHandler(requestPrimitive, targetResource);
+                break;
+            }
             case ty.AE: {
                 responsePrim = await this.aeManager.primitiveHandler(requestPrimitive, targetResource);
                 break;
@@ -213,7 +219,8 @@ export class Dispatcher {
 
     }
 
-    async discoveryProcedure(fc: filterCriteria, pi: string) {
+    async discoveryProcedure(fc: filterCriteria, pi: string,) {
+        fc.fu = 1; //temporary
         switch (Number(fc.fu)) {
             case 1: { //discovery
                 const result: Lookup[] = await this.lookupRepository.findBy({pi});

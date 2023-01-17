@@ -11,16 +11,18 @@ export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
     }
     const op = methodToOp[req.method];
     const urlParts = req.url.split('?');
-    const conditions = urlParts[1].split('&')
-    const filterCriteria = {
+    let filterCriteria = {};
+    if (urlParts[1]){
+        const conditions = urlParts[1]?.split('&')
 
+        for (const condition of conditions){
+            const parts = condition.split('=');
+            const conditionKey = parts[0];
+            const conditionValue = parts[1];
+            filterCriteria[conditionKey] = conditionValue;
+        }
     }
-    for (const condition of conditions){
-        const parts = condition.split('=');
-        const conditionKey = parts[0];
-        const conditionValue = parts[1];
-        filterCriteria[conditionKey] = conditionValue;
-    }
+
     return {
         "m2m:rqp": {
             op,
@@ -30,7 +32,7 @@ export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
             rvi: req.headers['x-m2m-rvi'],
             ty: ty,
             pc: req.body,
-            fc: filterCriteria as filterCriteria
+            fc: filterCriteria ? filterCriteria as filterCriteria : undefined
         }
     }
 }

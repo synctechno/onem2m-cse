@@ -51,9 +51,9 @@ export class CseBaseManager{
         })
     }
 
-    async primitiveHandler(primitive: requestPrimitive): Promise<responsePrimitive>{
+    async primitiveHandler(primitive: requestPrimitive, targetResource): Promise<responsePrimitive>{
         if (primitive["m2m:rqp"].op === 2){
-            const data = await this.cseBaseRepository.findOneById(primitive["m2m:rqp"].to);
+            const data = await this.cseBaseRepository.findOneById({ri: targetResource.ri});
             return {
                 "m2m:rsp":{
                     rsc: 2000,

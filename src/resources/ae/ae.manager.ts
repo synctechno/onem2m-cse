@@ -3,6 +3,7 @@ import {resourceTypeEnum} from "../../types/types.js";
 import {operationEnum, requestPrimitive, responsePrimitive} from "../../types/primitives.js";
 import {AeRepository} from "./ae.repository.js";
 import {LookupRepository} from "../lookup/lookup.repository.js";
+import {nanoid} from "nanoid";
 
 export class AeManager{
     private aeRepository;
@@ -38,15 +39,21 @@ export class AeManager{
                     }
                 }
             }
+            let resourceId = "";
+            if (primitive["m2m:rqp"].fr === 'S'){
+                resourceId = 'S' + nanoid(8)
+            } else if (primitive["m2m:rqp"].fr?.charAt(0) === 'C'){
+                resourceId = primitive["m2m:rqp"].fr;
+            }
 
             const resource: any = primitive["m2m:rqp"]["pc"]["m2m:ae"];
             resource.pi = targetResource.ri
-            resource.ri = primitive["m2m:rqp"].fr
+            resource.ri = resourceId
             resource.aei = primitive["m2m:rqp"].fr
 
             const data = await this.aeRepository.save(resource);
             await this.lookupRepository.save({
-                ri: primitive["m2m:rqp"].fr,
+                ri: resourceId,
                 pi: targetResource.ri,
                 path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:ae"].rn,
                 ty: resourceTypeEnum.AE })
