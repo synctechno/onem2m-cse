@@ -52,7 +52,14 @@ export class ContentInstanceManager {
             }
         }
         else if (primitive["m2m:rqp"].op === operationEnum.RETRIEVE){
-            const resource = await this.containerRepository.findOneBy({ri: targetResource.ri});
+            let resource;
+            if (!targetResource.olla){
+                resource = await this.contentInstanceRepository.findOneBy({ri: targetResource.ri});
+            } else {
+                resource = await this.contentInstanceRepository.findOne(
+                    {where: {pi: targetResource.pi},
+                    order: {ct: targetResource.olla == 'ol' ? 'ASC' : 'DESC'}});
+            }
             return {
                 "m2m:rsp":{
                     rsc: 2000,
@@ -63,8 +70,9 @@ export class ContentInstanceManager {
                     pc: {"m2m:cin": resource}
                 }
             }
+
         } else if (primitive["m2m:rqp"].op === operationEnum.DELETE){
-            const resource = await this.containerRepository.deleteOne({ri: targetResource.ri});
+            const resource = await this.contentInstanceRepository.deleteOne({ri: targetResource.ri});
             return {
                 "m2m:rsp":{
                     rsc: 2004,

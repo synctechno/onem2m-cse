@@ -60,7 +60,35 @@ export class Dispatcher {
     }
 
     async process(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
-        const targetResource = await this.lookupRepository.findOneBy({path: requestPrimitive["m2m:rqp"].to})
+        let targetResource;
+        //check if oldest or latest
+        if (requestPrimitive["m2m:rqp"].to.split('/').at(-1) === 'ol' ||
+            requestPrimitive["m2m:rqp"].to.split('/').at(-1) === 'la') {
+            const lastIndex = requestPrimitive["m2m:rqp"].to.lastIndexOf('/');
+            const path =  requestPrimitive["m2m:rqp"].to.slice(0, lastIndex);
+            const oldestLatest = requestPrimitive["m2m:rqp"].to.slice(lastIndex + 1);
+
+            const parentResource = await this.lookupRepository.findOneBy({path})
+            if (parentResource.ty !== resourceTypeEnum.container){
+                return Dispatcher.makeResponse({
+                    rsc: 5000, //TODO add correct error code
+                    rqi: requestPrimitive["m2m:rqp"].ri,
+                    rvi: requestPrimitive["m2m:rqp"].rvi,
+                    ot: new Date(),
+                    pc: ""
+                })
+            }
+            targetResource = {
+                ty: resourceTypeEnum.contentInstance,
+                pi: parentResource.ri,
+                olla: oldestLatest
+            }
+
+
+        } else {
+            const path = requestPrimitive["m2m:rqp"].to;
+            targetResource = await this.lookupRepository.findOneBy({path})
+        }
         //targetResource resource does not exist
         if (!targetResource) {
             return Dispatcher.makeResponse({
