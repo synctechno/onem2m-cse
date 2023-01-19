@@ -15,15 +15,17 @@ import {Lookup} from "./resources/lookup/lookup.entity.js";
 import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {ContainerManager} from "./resources/container/container.manager.js";
 import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
+import {LocationPolicyManager} from "./resources/locationPolciy/locationPolicy.manager.js";
 
 const allowedChildResources = new Map([
     [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
-    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy]],
+    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.subscription, ty.locationPolicy]],
     [ty.accessControlPolicy, [ty.subscription]],
     [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container]],
     [ty.subscription, []],
     [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription]],
-    [ty.contentInstance, []]
+    [ty.contentInstance, []],
+    [ty.locationPolicy, [ty.subscription]]
 ]);
 
 export class Dispatcher {
@@ -35,6 +37,7 @@ export class Dispatcher {
     private subscriptionManager;
     private containerManager;
     private contentInstanceManager;
+    private locationPolicyManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -44,7 +47,8 @@ export class Dispatcher {
         this.flexContainerManager = new FlexContainerManager();
         this.subscriptionManager = new SubscriptionManager();
         this.containerManager = new ContainerManager();
-        this.contentInstanceManager = new ContentInstanceManager()
+        this.contentInstanceManager = new ContentInstanceManager();
+        this.locationPolicyManager = new LocationPolicyManager();
     }
 
     private static makeResponse({rsc, rqi, rvi, ot = new Date(), pc}): responsePrimitive {
@@ -188,6 +192,10 @@ export class Dispatcher {
             }
             case ty.contentInstance: {
                 responsePrim = await this.contentInstanceManager.primitiveHandler(requestPrimitive, targetResource);
+                break;
+            }
+            case ty.locationPolicy: {
+                responsePrim = await this.locationPolicyManager.primitiveHandler(requestPrimitive, targetResource);
                 break;
             }
             default:

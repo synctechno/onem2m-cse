@@ -109,6 +109,17 @@ export type filterCriteria = {
     rcn: number //response content
 }
 
+export enum locationSource {
+    NETWORK_BASED = 1,
+    DEVICE_BASED = 2,
+    SHARING_BASED = 3
+}
+
+export enum locationInformationType {
+    POSITION_FIX = 1,
+    GEOFENCE_EVENT = 2,
+}
+
 export type prefixMapType = Map<resourceTypeEnum, string>;
 
 type atLeastOne<T, U = {[K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]

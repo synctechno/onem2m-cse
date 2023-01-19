@@ -8,6 +8,7 @@ import {FlexContainer} from "./resources/flexContainer/flexContainer.entity.js";
 import {Subscription} from "./resources/subscription/subscription.entity.js";
 import {Container} from "./resources/container/container.entity.js";
 import {ContentInstance} from "./resources/contentInstance/contentInstance.entity.js";
+import {LocationPolicy} from "./resources/locationPolciy/locationPolicy.entity.js";
 
 const CseDataSource = new DataSource({
     type: "postgres",
@@ -24,7 +25,8 @@ const CseDataSource = new DataSource({
         FlexContainer,
         Subscription,
         Container,
-        ContentInstance
+        ContentInstance,
+        LocationPolicy
     ],
     synchronize: true
 })
