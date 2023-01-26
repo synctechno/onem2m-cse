@@ -93,4 +93,8 @@ export class AeManager{
             }
         }
     }
+
+    getResource(ri){
+        return this.aeRepository.findOneBy({ri});
+    }
 }

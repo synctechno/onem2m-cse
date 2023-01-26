@@ -143,4 +143,8 @@ export class FlexContainerManager {
             }
         }
     }
+    async getResource(ri){
+        const {ca: caFromDb, ...rest} =  this.flexContainerRepository.findOneBy({ri});
+        return {...rest, ...caFromDb}
+    }
 }

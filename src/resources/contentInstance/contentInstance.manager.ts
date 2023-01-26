@@ -95,4 +95,8 @@ export class ContentInstanceManager {
             }
         }
     }
+
+    getResource(ri){
+        return this.contentInstanceRepository.findOneBy({ri});
+    }
 }

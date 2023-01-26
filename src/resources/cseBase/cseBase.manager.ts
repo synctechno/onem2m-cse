@@ -75,4 +75,8 @@ export class CseBaseManager{
             }
         }
     }
+
+    getResource(ri){
+        return this.cseBaseRepository.findOneBy({ri});
+    }
 }

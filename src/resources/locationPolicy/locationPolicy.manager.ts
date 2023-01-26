@@ -87,4 +87,7 @@ export class LocationPolicyManager {
             }
         }
     }
+    getResource(ri){
+        return this.locationPolicyRepository.findOneBy({ri});
+    }
 }

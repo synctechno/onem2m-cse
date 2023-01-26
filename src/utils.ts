@@ -28,10 +28,10 @@ export const resourceTypeToPrefix: prefixMapType = new Map([
     [resourceTypeEnum.contentInstance, "m2m:cin"],
     [resourceTypeEnum.subscription, "m2m:sub"],
     [resourceTypeEnum.flexContainer, "m2m:fcnt"],
+    [resourceTypeEnum.locationPolicy, "m2m:lcp"],
+    [resourceTypeEnum.group, "m2m:grp"],
 
     [resourceTypeEnum.delivery, "m2m:x"],
     [resourceTypeEnum.eventConfig, "m2m:x"],
     [resourceTypeEnum.execInstance, "m2m:x"],
-    [resourceTypeEnum.group, "m2m:x"],
-    [resourceTypeEnum.locationPolicy, "m2m:x"],
 ])

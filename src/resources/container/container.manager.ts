@@ -64,4 +64,8 @@ export class ContainerManager {
             }
         }
     }
+
+    getResource(ri){
+        return this.containerRepository.findOneBy({ri});
+    }
 }

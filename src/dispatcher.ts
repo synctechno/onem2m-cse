@@ -15,7 +15,7 @@ import {Lookup} from "./resources/lookup/lookup.entity.js";
 import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {ContainerManager} from "./resources/container/container.manager.js";
 import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
-import {LocationPolicyManager} from "./resources/locationPolciy/locationPolicy.manager.js";
+import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.manager.js";
 
 const allowedChildResources = new Map([
     [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
@@ -255,34 +255,84 @@ export class Dispatcher {
 
     }
 
-    async discoveryProcedure(fc: filterCriteria, pi: string,) {
+    async discoveryProcedure(fc: filterCriteria, resourceId: string) {
         fc.fu = 1; //temporary
         switch (Number(fc.fu)) {
             case 1: { //discovery
-                const result: Lookup[] = await this.lookupRepository.findBy({pi});
-                if (Number(fc?.rcn) === 8) {
-                    let pc: Object = {
-                        "m2m:rrl": {
-                            "m2m:rrf": []
-                        }
-                    };
-                    for (const resourceLookup of result) {
-                        let rn = resourceLookup.path.split('/').at(-1);
-                        pc["m2m:rrl"]["m2m:rrf"].push(
-                            {
-                                nm: rn,
-                                typ: resourceLookup.ty,
-                                val: resourceLookup.path
+                const result: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
+                switch (Number(fc?.rcn)){
+                    case 8: {
+                        let pc: Object = {
+                            "m2m:rrl": {
+                                "m2m:rrf": []
                             }
-                        )
+                        };
+                        for (const resourceLookup of result) {
+                            let rn = resourceLookup.path.split('/').at(-1);
+                            pc["m2m:rrl"]["m2m:rrf"].push(
+                                {
+                                    nm: rn,
+                                    typ: resourceLookup.ty,
+                                    val: resourceLookup.path
+                                }
+                            )
+                        }
+                        return pc;
                     }
-                    return pc;
-                } else {
-                    return null;
+                    case 4: {
+                        const result: Lookup = await this.lookupRepository.findOneBy({ri: resourceId});
+                        const baseResource = await this.getResource(result.ri, result.ty);
+
+                        const childResourcesLookup: Lookup[] =  await this.lookupRepository.findBy({pi: resourceId});
+                        for (const child of childResourcesLookup){
+                            if(!baseResource.hasOwnProperty(resourceTypeToPrefix.get(child.ty))){
+                                baseResource[resourceTypeToPrefix.get(child.ty)!] = []
+                            }
+                            baseResource[resourceTypeToPrefix.get(child.ty)!].push(
+                                await this.getResource(child.ri, child.ty)
+                            )
+                        }
+                        const baseResourcePrefix: string = resourceTypeToPrefix.get(baseResource.ty)!;
+                        return {
+                            [baseResourcePrefix]: baseResource
+                        }
+                    }
+                    default: {
+                        return null;
+                    }
                 }
             }
         }
 
+    }
+
+    async getResource(ri: string, ty: resourceTypeEnum){
+        switch (ty) {
+            case resourceTypeEnum.CSEBase: {
+                return this.cseBaseManager.getResource(ri);
+            }
+            case resourceTypeEnum.AE: {
+                return this.aeManager.getResource(ri);
+            }
+            case resourceTypeEnum.accessControlPolicy: {
+                return this.acpManager.getResource(ri);
+            }
+            case resourceTypeEnum.container: {
+                return this.containerManager.getResource(ri);
+            }
+            case resourceTypeEnum.contentInstance: {
+                return this.contentInstanceManager.getResource(ri);
+            }
+            case resourceTypeEnum.flexContainer: {
+                return this.flexContainerManager.getResource(ri);
+            }
+            case resourceTypeEnum.subscription: {
+                return this.subscriptionManager.getResource(ri);
+            }
+            case resourceTypeEnum.locationPolicy: {
+                return this.locationPolicyManager.getResource(ri);
+            }
+        }
     }
 }
 

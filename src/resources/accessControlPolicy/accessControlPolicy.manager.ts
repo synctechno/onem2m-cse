@@ -99,4 +99,8 @@ export class AccessControlPolicyManager {
             [operationEnum.DISCOVERY, false],
         ])
     }
+
+    getResource(ri){
+        return this.acpRepository.findBy({ri});
+    }
 }

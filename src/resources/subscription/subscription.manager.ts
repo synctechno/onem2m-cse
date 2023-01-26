@@ -71,4 +71,8 @@ export class SubscriptionManager {
     getResourceSubscriptions(pi){
         return this.subscriptionRepository.findBy({pi});
     }
+
+    getResource(ri){
+        return this.subscriptionRepository.findOneBy({ri});
+    }
 }
