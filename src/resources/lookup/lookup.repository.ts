@@ -1,4 +1,3 @@
-import {CseBase} from "../cseBase/cseBase.entity.js";
 import {DataSource, Repository} from "typeorm";
 import {Lookup} from "./lookup.entity.js";
 

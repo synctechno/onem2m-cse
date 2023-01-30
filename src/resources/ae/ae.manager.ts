@@ -55,7 +55,7 @@ export class AeManager{
             await this.lookupRepository.save({
                 ri: resourceId,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:ae"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:ae"].rn,
                 ty: resourceTypeEnum.AE })
 
             return {
@@ -81,7 +81,22 @@ export class AeManager{
                     pc: {"m2m:ae": resource}
                 }
             }
-        } else {
+        } else if (primitive["m2m:rqp"].op === operationEnum.DELETE){
+            await this.aeRepository.deleteOne({ri: targetResource.ri});
+            await this.lookupRepository.deleteOne({ri: targetResource.ri});
+            return {
+                "m2m:rsp":{
+                    rsc: 2004,
+                    rqi: primitive["m2m:rqp"].ri,
+                    rvi: primitive["m2m:rqp"].rvi,
+                    ot: new Date(),
+                    ty: targetResource.ty,
+                    pc: null
+                }
+            }
+        }
+
+        else {
             return {
                 "m2m:rsp":{
                     rsc: 5000,

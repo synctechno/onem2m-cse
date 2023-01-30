@@ -23,6 +23,7 @@ export class ContentInstanceManager {
         if (primitive["m2m:rqp"].op === operationEnum.CREATE){
             const resource: any = primitive["m2m:rqp"]["pc"]["m2m:cin"];
             resource.pi = targetResource.ri;
+            resource.rn = 'cin_' + nanoid(8)
 
             const ri = nanoid(8);
             resource.ri = ri;
@@ -32,7 +33,7 @@ export class ContentInstanceManager {
             await this.lookupRepository.save({
                 ri: ri,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:cin"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:cin"].rn,
                 ty: resourceTypeEnum.contentInstance })
 
             const parentContainer: Container = await this.containerRepository.findOneBy({ri: targetResource.ri})

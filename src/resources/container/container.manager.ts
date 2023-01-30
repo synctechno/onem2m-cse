@@ -26,7 +26,7 @@ export class ContainerManager {
             await this.lookupRepository.save({
                 ri: ri,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:cnt"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:cnt"].rn,
                 ty: resourceTypeEnum.container })
 
             return {

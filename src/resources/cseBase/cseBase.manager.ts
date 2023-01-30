@@ -1,13 +1,11 @@
 import dataSource from '../../database.js'
-import {CseBase} from "./cseBase.entity.js";
 import {resourceTypeEnum, supportedReleaseVersions} from "../../types/types.js";
-import {Repository} from "typeorm";
 import {requestPrimitive, responsePrimitive} from "../../types/primitives.js";
 import {CseBaseRepository} from "./cseBase.repository.js";
 import {LookupRepository} from "../lookup/lookup.repository.js";
 
-const SRV: supportedReleaseVersions = ["3"]
-const POA = ["http://127.0.0.1:3000"]
+const SRV: supportedReleaseVersions = ["3"];
+const POA = ["http://127.0.0.1:3000"];
 const CSE_RESOURCE_ID = "KLFHnzxa";
 
 export class CseBaseManager{
@@ -46,7 +44,7 @@ export class CseBaseManager{
         await this.lookupRepository.save({
             ri,
             pi: "",
-            path: "/" + rn,
+            structured: rn,
             ty: resourceTypeEnum.CSEBase
         })
     }

@@ -11,7 +11,7 @@ export class Lookup {
     @Column()
     readonly pi: string;
     @Column()
-    readonly path: string;
+    readonly structured: string;
     @Column({
         type: "enum",
         enum: resourceTypeEnum

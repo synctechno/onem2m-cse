@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 
 //TS-0004 6.3.4.2.1	m2m:resourceType
 export enum resourceTypeEnum {
+    mixed = 0, //used for group memberType only
     accessControlPolicy = 1,
     AE = 2,
     container = 3,

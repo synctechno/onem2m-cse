@@ -31,7 +31,7 @@ export class AccessControlPolicyManager {
             await this.lookupRepository.save({
                 ri: ri,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:acp"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:acp"].rn,
                 ty: resourceTypeEnum.accessControlPolicy })
 
             return {

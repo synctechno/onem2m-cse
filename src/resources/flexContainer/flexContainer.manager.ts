@@ -56,7 +56,7 @@ export class FlexContainerManager {
                 await this.lookupRepository.save({
                     ri,
                     pi: targetResource.ri,
-                    path: targetResource.path + '/' + primitive["m2m:rqp"].pc[prefix].rn,
+                    structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc[prefix].rn,
                     ty: resourceTypeEnum.flexContainer
                 })
 

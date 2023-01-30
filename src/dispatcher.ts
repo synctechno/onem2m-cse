@@ -10,7 +10,7 @@ import {Subscription} from "./resources/subscription/subscription.entity.js";
 import {cseConfig} from "./configs/cse.config.js";
 import {request} from "./bindings/mqtt/request.js";
 import {nanoid} from "nanoid";
-import {resourceTypeToPrefix} from "./utils.js";
+import {handleTo, resourceTypeToPrefix} from "./utils.js";
 import {Lookup} from "./resources/lookup/lookup.entity.js";
 import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {ContainerManager} from "./resources/container/container.manager.js";
@@ -64,15 +64,50 @@ export class Dispatcher {
     }
 
     async process(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
+        const to = requestPrimitive["m2m:rqp"].to;
+        const parsedTo = handleTo(to, cseConfig.cseName);
+        if (parsedTo === null){
+            return Dispatcher.makeResponse({
+                rsc: 4000,
+                rqi: requestPrimitive["m2m:rqp"].ri,
+                rvi: requestPrimitive["m2m:rqp"].rvi,
+                ot: new Date(),
+                pc: null
+            })
+        } else if (parsedTo.spId) {
+            if (parsedTo.spId !== cseConfig.spId) {
+                //TODO handle the case when M2M-SP-ID is different from the configured one, e.g. forward to another CSE
+                return Dispatcher.makeResponse({
+                    rsc: 4000,
+                    rqi: requestPrimitive["m2m:rqp"].ri,
+                    rvi: requestPrimitive["m2m:rqp"].rvi,
+                    ot: new Date(),
+                    pc: null
+                })
+            }
+        } else if (parsedTo.cseId){
+            if (parsedTo.cseId !== cseConfig.cseId) {
+                //TODO handle the case when Relative CSE-ID is different from the configured one, e.g. forward to another CSE
+                return Dispatcher.makeResponse({
+                    rsc: 4000,
+                    rqi: requestPrimitive["m2m:rqp"].ri,
+                    rvi: requestPrimitive["m2m:rqp"].rvi,
+                    ot: new Date(),
+                    pc: null
+                })
+            }
+        }
+
         let targetResource;
         //check if oldest or latest
-        if (requestPrimitive["m2m:rqp"].to.split('/').at(-1) === 'ol' ||
-            requestPrimitive["m2m:rqp"].to.split('/').at(-1) === 'la') {
-            const lastIndex = requestPrimitive["m2m:rqp"].to.lastIndexOf('/');
-            const path =  requestPrimitive["m2m:rqp"].to.slice(0, lastIndex);
-            const oldestLatest = requestPrimitive["m2m:rqp"].to.slice(lastIndex + 1);
+        if (parsedTo.id.split('/').at(-1) === 'ol' ||
+            parsedTo.id.split('/').at(-1) === 'la') {
+            const lastIndex = parsedTo.id.lastIndexOf('/');
+            const oldestLatest = parsedTo.id.slice(lastIndex + 1);
 
-            const parentResource = await this.lookupRepository.findOneBy({path})
+            const parentResource = await this.lookupRepository.findOneBy({
+                [parsedTo.structured ? 'structured' : 'ri']: parsedTo.id.slice(0, lastIndex)
+            })
             if (parentResource.ty !== resourceTypeEnum.container){
                 return Dispatcher.makeResponse({
                     rsc: 5000, //TODO add correct error code
@@ -90,8 +125,9 @@ export class Dispatcher {
 
 
         } else {
-            const path = requestPrimitive["m2m:rqp"].to;
-            targetResource = await this.lookupRepository.findOneBy({path})
+            targetResource = await this.lookupRepository.findOneBy(
+                {[parsedTo.structured ? 'structured' : 'ri']: parsedTo.id}
+            )
         }
         //targetResource resource does not exist
         if (!targetResource) {
@@ -118,7 +154,7 @@ export class Dispatcher {
             //resource with the same resourceName exists
             const siblingResources = await this.lookupRepository.findBy({pi: targetResource.ri});
             for (const resource of siblingResources){
-                let rn = resource.path.split('/').at(-1);
+                let rn = resource.structured.split('/').at(-1);
                 const prefix = Object.keys(requestPrimitive["m2m:rqp"]["pc"])[0]
                 if (requestPrimitive["m2m:rqp"]["pc"][prefix].rn === rn){
                     return Dispatcher.makeResponse({
@@ -268,12 +304,12 @@ export class Dispatcher {
                             }
                         };
                         for (const resourceLookup of result) {
-                            let rn = resourceLookup.path.split('/').at(-1);
+                            let rn = resourceLookup.structured.split('/').at(-1);
                             pc["m2m:rrl"]["m2m:rrf"].push(
                                 {
                                     nm: rn,
                                     typ: resourceLookup.ty,
-                                    val: resourceLookup.path
+                                    val: resourceLookup.structured
                                 }
                             )
                         }
@@ -303,7 +339,6 @@ export class Dispatcher {
                 }
             }
         }
-
     }
 
     async getResource(ri: string, ty: resourceTypeEnum){

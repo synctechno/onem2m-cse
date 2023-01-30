@@ -29,7 +29,7 @@ export class LocationPolicyManager {
             const containerRi = nanoid(8);
             resource.loi = containerRi;
 
-            const containerName = resource.lon ? resource.lon: nanoid(8)
+            const containerName = resource.lon ? resource.lon: 'lcp_' + nanoid(8)
 
             const containerResource = {
                 ri: containerRi,
@@ -41,7 +41,7 @@ export class LocationPolicyManager {
             await this.lookupRepository.save({
                 ri: containerRi,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + containerName,
+                structured: targetResource.structured + '/' + containerName,
                 ty: resourceTypeEnum.container})
 
             await this.containerRepository.save(containerResource);
@@ -49,7 +49,7 @@ export class LocationPolicyManager {
             await this.lookupRepository.save({
                 ri: ri,
                 pi: targetResource.ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:lcp"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:lcp"].rn,
                 ty: resourceTypeEnum.locationPolicy })
 
             return {

@@ -30,7 +30,7 @@ export class SubscriptionManager {
             const data = await this.subscriptionRepository.save(resource);
             await this.lookupRepository.save({
                 ri: ri,
-                path: targetResource.path + '/' + primitive["m2m:rqp"].pc["m2m:sub"].rn,
+                structured: targetResource.structured + '/' + primitive["m2m:rqp"].pc["m2m:sub"].rn,
                 ty: resourceTypeEnum.subscription })
 
             return {

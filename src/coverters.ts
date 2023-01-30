@@ -13,7 +13,7 @@ export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
     const urlParts = req.url.split('?');
     let filterCriteria = {};
     if (urlParts[1]){
-        const conditions = urlParts[1]?.split('&')
+        const conditions = urlParts[1]?.split('&');
 
         for (const condition of conditions){
             const parts = condition.split('=');
@@ -26,7 +26,7 @@ export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
     return {
         "m2m:rqp": {
             op,
-            to: urlParts[0],
+            to: pathToTo(urlParts[0]),
             fr: req.headers['x-m2m-origin'],
             ri: req.headers['x-m2m-ri'],
             rvi: req.headers['x-m2m-rvi'],
@@ -70,6 +70,17 @@ export function requestPrimitiveToMqtt(requestPrimitive: requestPrimitive){
             pc: requestPrimitive["m2m:rqp"].pc,
             ot: new Date()
         }
+    }
+}
+
+//TS-0009 6.2.2.1 Path component
+function pathToTo (path: string): string {
+    if (path.startsWith('/_/')){ //absolute
+        return '/' + path.substring(2)
+    } else if (path.startsWith('/~/')) { //SP-relative
+        return path.substring(2)
+    } else { //CSE-relative
+        return path.substring(1)
     }
 }
 
