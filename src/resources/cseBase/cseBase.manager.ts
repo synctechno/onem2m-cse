@@ -1,6 +1,6 @@
 import dataSource from '../../database.js'
-import {resourceTypeEnum, supportedReleaseVersions} from "../../types/types.js";
-import {requestPrimitive, responsePrimitive} from "../../types/primitives.js";
+import {resourceTypeEnum, resultData, rscEnum as rsc, supportedReleaseVersions} from "../../types/types.js";
+import {operationEnum} from "../../types/primitives.js";
 import {CseBaseRepository} from "./cseBase.repository.js";
 import {LookupRepository} from "../lookup/lookup.repository.js";
 
@@ -49,27 +49,20 @@ export class CseBaseManager{
         })
     }
 
-    async primitiveHandler(primitive: requestPrimitive, targetResource): Promise<responsePrimitive>{
-        if (primitive["m2m:rqp"].op === 2){
-            const data = await this.cseBaseRepository.findOneById({ri: targetResource.ri});
-            return {
-                "m2m:rsp":{
-                    rsc: 2000,
-                    rqi: primitive["m2m:rqp"].ri,
-                    rvi: primitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: {"m2m:cb": data}
+    async handleRequest(op: operationEnum, targetResource): Promise<resultData>{
+        switch (op) {
+            case operationEnum.RETRIEVE:{
+                const resource = await this.cseBaseRepository.findOneBy({ri: targetResource.ri});
+                if (!resource){
+                    return rsc.NOT_FOUND;
+                }
+                return {
+                    rsc: rsc.OK,
+                    pc: {"m2m:cb": resource}
                 }
             }
-        } else {
-            return {
-                "m2m:rsp":{
-                    rsc: 5000,
-                    rqi: primitive["m2m:rqp"].ri,
-                    rvi: primitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: ""
-                }
+            default:{
+                return rsc.OPERATION_NOT_ALLOWED;
             }
         }
     }

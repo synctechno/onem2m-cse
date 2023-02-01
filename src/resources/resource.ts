@@ -1,5 +1,6 @@
-import {Column, CreateDateColumn, Entity, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn} from "typeorm";
+import {Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn} from "typeorm";
 import {nanoid} from "nanoid";
+import {resourceTypeEnum} from "../types/types";
 
 @Entity()
 export abstract class Resource {

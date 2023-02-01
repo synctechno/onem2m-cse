@@ -6,8 +6,4 @@ export class AccessControlPolicyRepository extends Repository<AccessControlPolic
     constructor(dataSource: DataSource) {
         super(AccessControlPolicy, dataSource.createEntityManager());
     }
-    retrieveByResourceId(ri): Promise<AccessControlPolicy | null>
-    {
-        return this.findOneBy({ri});
-    }
 }

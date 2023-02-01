@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import {requestPrimitiveToMqtt} from "../../coverters.js";
+import {requestPrimitiveToMqtt} from "./converter.js";
 
 export async function request(primitive){
     const {url, topic, payload} = requestPrimitiveToMqtt(primitive)

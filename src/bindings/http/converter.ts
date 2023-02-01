@@ -1,8 +1,7 @@
-import {operationEnum, requestPrimitive, responsePrimitive} from "./types/primitives.js";
-import {filterCriteria, prefixMapType, resourceTypeEnum} from "./types/types.js";
-import {resourceTypeToPrefix} from "./utils.js";
+import {operationEnum, requestPrimitive, responsePrimitive} from "../../types/primitives.js";
+import {filterCriteria} from "../../types/types.js";
 
-export function httpToPrimitive(req, ty?, resourceId?): requestPrimitive {
+export function httpToPrimitive(req, ty?): requestPrimitive {
     const methodToOp = {
         "POST": operationEnum.CREATE,
         "GET": operationEnum.RETRIEVE,
@@ -51,25 +50,7 @@ export function primitiveToHtpp(primitive: responsePrimitive) {
             "X-M2M-OT": primitive["m2m:rsp"].ot
         },
         body: [2000, 2001, 2002, 2004].includes(primitive["m2m:rsp"].rsc) ? body : undefined,
-        statusCode: statusCode.get(primitive["m2m:rsp"].rsc) || 200 //TODO remove 200 when all status codes are entered
-    }
-}
-
-export function requestPrimitiveToMqtt(requestPrimitive: requestPrimitive){
-    let [url, serialization] = requestPrimitive["m2m:rqp"].to.split('?ct=')
-    if (!serialization){
-        serialization = 'json'
-    }
-    return {
-        url: url,
-        topic: '/oneM2M/req/' + requestPrimitive["m2m:rqp"].fr + '/' + requestPrimitive["m2m:rqp"].to + '/' + serialization,
-        payload: {
-            op: requestPrimitive["m2m:rqp"].op,
-            fr: requestPrimitive["m2m:rqp"].fr,
-            to: requestPrimitive["m2m:rqp"].to,
-            pc: requestPrimitive["m2m:rqp"].pc,
-            ot: new Date()
-        }
+        statusCode: statusCode.get(primitive["m2m:rsp"].rsc)
     }
 }
 
@@ -121,9 +102,21 @@ const statusCode = new Map([
     [4113, 403],
     [4114, 403],
     [4115, 403],
-
-    //TODO finish 403
-
+    [4116, 403],
+    [4117, 403],
+    [4126, 403],
+    [4127, 403],
+    [4128, 403],
+    [4135, 403],
+    [4136, 403],
+    [4138, 403],
+    [4139, 403],
+    [5208, 403],
+    [5214, 403],
+    [5215, 403],
+    [5218, 403],
+    [5222, 403],
+    [6034, 403],
     [4004, 404],
     [4118, 404],
     [4119, 404],
@@ -136,7 +129,40 @@ const statusCode = new Map([
     [6005, 404],
     [4005, 405],
     [5207, 406],
-    //TODO finish rest
+    [4104, 409],
+    [4105, 409],
+    [4124, 409],
+    [4140, 409],
+    [5106, 409],
+    [5219, 409],
+    [5220, 409],
+    [6028, 409],
+    [6029, 409],
+    [4015, 415],
+    [5000, 500],
+    [5204, 500],
+    [5209, 500],
+    [5210, 500],
+    [5211, 500],
+    [5212, 500],
+    [5216, 500],
+    [5217, 500],
+    [5221, 500],
+    [5230, 500],
+    [5231, 500],
+    [5232, 500],
+    [6020, 500],
+    [6021, 500],
+    [6025, 500],
+    [6026, 500],
+    [6033, 500],
+    [4001, 501],
+    [4125, 501],
+    [5001, 501],
+    [5206, 501],
+    [4008, 504],
+    [6030, 504],
+    [6031, 504],
 ])
 
 

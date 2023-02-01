@@ -1,7 +1,14 @@
-import {operationEnum, requestPrimitive, responsePrimitive} from "./types/primitives.js";
+import {operationEnum, requestPrimitive, requestPrimitiveData, responsePrimitive} from "./types/primitives.js";
 import dataSource from "./database.js";
 import {LookupRepository} from "./resources/lookup/lookup.repository.js";
-import {filterCriteria, notificationEventType, resourceTypeEnum, resourceTypeEnum as ty} from "./types/types.js";
+import {
+    filterCriteria,
+    notificationEventType,
+    resourceTypeEnum,
+    resourceTypeEnum as ty,
+    resultData,
+    rscEnum as rsc
+} from "./types/types.js";
 import {AeManager} from "./resources/ae/ae.manager.js";
 import {AccessControlPolicyManager} from "./resources/accessControlPolicy/accessControlPolicy.manager.js";
 import {FlexContainerManager} from "./resources/flexContainer/flexContainer.manager.js";
@@ -29,15 +36,15 @@ const allowedChildResources = new Map([
 ]);
 
 export class Dispatcher {
-    private lookupRepository;
-    private cseBaseManager;
-    private aeManager;
-    private acpManager;
-    private flexContainerManager;
-    private subscriptionManager;
-    private containerManager;
-    private contentInstanceManager;
-    private locationPolicyManager;
+    private lookupRepository: LookupRepository;
+    private cseBaseManager: CseBaseManager;
+    private aeManager: AeManager;
+    private acpManager: AccessControlPolicyManager;
+    private flexContainerManager: FlexContainerManager;
+    private subscriptionManager: SubscriptionManager;
+    private containerManager: ContainerManager;
+    private contentInstanceManager: ContentInstanceManager;
+    private locationPolicyManager: LocationPolicyManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -51,50 +58,51 @@ export class Dispatcher {
         this.locationPolicyManager = new LocationPolicyManager();
     }
 
-    private static makeResponse({rsc, rqi, rvi, ot = new Date(), pc}): responsePrimitive {
+    async primitiveGateway(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
+        const primitiveData = requestPrimitive["m2m:rqp"]
+        const result = await this.process(primitiveData);
+        let rsc, pc;
+        if (typeof result === "number"){
+            rsc = result;
+        } else {
+            rsc = result.rsc;
+            pc = result.pc;
+        }
         return {
             "m2m:rsp": {
                 rsc,
-                rqi,
-                rvi,
-                ot,
+                rqi: primitiveData.ri,
+                rvi: primitiveData.rvi,
+                ot: new Date(),
                 pc
             }
         }
     }
 
-    async process(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
-        const to = requestPrimitive["m2m:rqp"].to;
+
+    async process(requestPrimitiveData: requestPrimitiveData): Promise<resultData> {
+        //if fr is empty, response BAD_REQUEST (except for CREATE AE operation)
+        if (!requestPrimitiveData.fr && !(requestPrimitiveData.op === operationEnum.CREATE && requestPrimitiveData.ty === ty.AE)){
+            return rsc.BAD_REQUEST;
+        }
+        //if fr is not type of AE-ID-Stem (does not start with 'C' or 'S'), response BAD_REQUEST
+        if (!requestPrimitiveData.fr!.startsWith('C') && !requestPrimitiveData.fr!.startsWith('S')){
+            return rsc.BAD_REQUEST;
+        }
+
+        const to = requestPrimitiveData.to;
         const parsedTo = handleTo(to, cseConfig.cseName);
         if (parsedTo === null){
-            return Dispatcher.makeResponse({
-                rsc: 4000,
-                rqi: requestPrimitive["m2m:rqp"].ri,
-                rvi: requestPrimitive["m2m:rqp"].rvi,
-                ot: new Date(),
-                pc: null
-            })
+            return rsc.NOT_FOUND;
         } else if (parsedTo.spId) {
             if (parsedTo.spId !== cseConfig.spId) {
                 //TODO handle the case when M2M-SP-ID is different from the configured one, e.g. forward to another CSE
-                return Dispatcher.makeResponse({
-                    rsc: 4000,
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: null
-                })
+                return rsc.NOT_IMPLEMENTED
             }
         } else if (parsedTo.cseId){
             if (parsedTo.cseId !== cseConfig.cseId) {
                 //TODO handle the case when Relative CSE-ID is different from the configured one, e.g. forward to another CSE
-                return Dispatcher.makeResponse({
-                    rsc: 4000,
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: null
-                })
+                return rsc.NOT_IMPLEMENTED
             }
         }
 
@@ -108,14 +116,11 @@ export class Dispatcher {
             const parentResource = await this.lookupRepository.findOneBy({
                 [parsedTo.structured ? 'structured' : 'ri']: parsedTo.id.slice(0, lastIndex)
             })
+            if (!parentResource){
+                return rsc.NOT_FOUND;
+            }
             if (parentResource.ty !== resourceTypeEnum.container){
-                return Dispatcher.makeResponse({
-                    rsc: 5000, //TODO add correct error code
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: ""
-                })
+                return rsc.NOT_FOUND;
             }
             targetResource = {
                 ty: resourceTypeEnum.contentInstance,
@@ -131,134 +136,103 @@ export class Dispatcher {
         }
         //targetResource resource does not exist
         if (!targetResource) {
-            return Dispatcher.makeResponse({
-                rsc: 5000, //TODO add correct error code
-                rqi: requestPrimitive["m2m:rqp"].ri,
-                rvi: requestPrimitive["m2m:rqp"].rvi,
-                ot: new Date(),
-                pc: ""
-            })
+            return rsc.NOT_FOUND;
         }
-        if (requestPrimitive["m2m:rqp"].op === operationEnum.CREATE) {
+        if (requestPrimitiveData.op === operationEnum.CREATE) {
             //targetResource resource does not allow this type of child resource
-            if (!allowedChildResources.get(targetResource.ty)?.includes(requestPrimitive["m2m:rqp"].ty)) {
-                return Dispatcher.makeResponse({
-                    rsc: 5000, //TODO add correct error code
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: ""
-                })
+            if (!allowedChildResources.get(targetResource.ty)?.includes(requestPrimitiveData.ty)) {
+                return rsc.INVALID_CHILD_RESOURCE_TYPE;
             }
 
             //resource with the same resourceName exists
             const siblingResources = await this.lookupRepository.findBy({pi: targetResource.ri});
             for (const resource of siblingResources){
                 let rn = resource.structured.split('/').at(-1);
-                const prefix = Object.keys(requestPrimitive["m2m:rqp"]["pc"])[0]
-                if (requestPrimitive["m2m:rqp"]["pc"][prefix].rn === rn){
-                    return Dispatcher.makeResponse({
-                        rsc: 4000, //TODO add correct error code
-                        rqi: requestPrimitive["m2m:rqp"].ri,
-                        rvi: requestPrimitive["m2m:rqp"].rvi,
-                        ot: new Date(),
-                        pc: ""
-                    })
+                const prefix = Object.keys(requestPrimitiveData['pc'])[0]
+                if (requestPrimitiveData['pc'][prefix].rn === rn){
+                    return rsc.CONFLICT;
                 }
             }
         }
         //check permissions if acpi exists
         if (targetResource.acpi && targetResource.ty !== resourceTypeEnum.accessControlPolicy) {
             const operationPrivileges =
-                this.acpManager.checkPrivilges(requestPrimitive["m2m:rqp"].fr)
-            if (!operationPrivileges.get(requestPrimitive["m2m:rqp"].op)) {
-                return Dispatcher.makeResponse({
-                    rsc: 5000, //TODO add correct error code
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: ""
-                })
+                await this.acpManager.checkPrivileges(requestPrimitiveData.fr, targetResource.acpi)
+            if (!operationPrivileges.get(requestPrimitiveData.op)) {
+                return rsc.ORIGINATOR_HAS_NO_PRIVILEGE;
             }
         } else if (targetResource.ty === resourceTypeEnum.accessControlPolicy){
-            const operationPrivileges = this.acpManager.checkPrivileges(requestPrimitive["m2m:rqp"].fr)
-        }
-
-        const targetResourceType: resourceTypeEnum = requestPrimitive["m2m:rqp"].op === operationEnum.CREATE ?
-            requestPrimitive["m2m:rqp"].ty : targetResource.ty
-
-        if (requestPrimitive["m2m:rqp"].op === operationEnum.RETRIEVE && Object.keys(requestPrimitive["m2m:rqp"].fc as Object).length !== 0){
-            const pc = await this.discoveryProcedure(requestPrimitive["m2m:rqp"].fc!, targetResource.ri);
-            if (pc){
-                return Dispatcher.makeResponse({
-                    rsc: 2001, //TODO add correct error code
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    pc: pc
-                })
+            const operationPrivileges = await this.acpManager.checkPrivileges(requestPrimitiveData.fr, targetResource.acpi);
+            if (!operationPrivileges.get(requestPrimitiveData.op)) {
+                return rsc.ORIGINATOR_HAS_NO_PRIVILEGE;
             }
         }
 
-        let responsePrim: responsePrimitive;
+        const targetResourceType: resourceTypeEnum = requestPrimitiveData.op === operationEnum.CREATE ?
+            requestPrimitiveData.ty : targetResource.ty
+
+        if (requestPrimitiveData.op === operationEnum.RETRIEVE && Object.keys(requestPrimitiveData.fc as Object).length !== 0){
+            const pc = await this.discoveryProcedure(requestPrimitiveData.fc!, targetResource.ri);
+            if (pc){
+                return {pc, rsc: rsc.OK}
+            }
+        }
+
+        let result: resultData;
 
         switch (targetResourceType) {
             case ty.CSEBase: {
-                responsePrim = await this.cseBaseManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, targetResource);
                 break;
             }
             case ty.AE: {
-                responsePrim = await this.aeManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.aeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource,
+                    {fr: requestPrimitiveData.fr});
                 break;
             }
             case ty.accessControlPolicy: {
-                responsePrim = await this.acpManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.acpManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             case ty.flexContainer: {
-                responsePrim = await this.flexContainerManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.flexContainerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             case ty.subscription: {
-                responsePrim = await this.subscriptionManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.subscriptionManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             case ty.container: {
-                responsePrim = await this.containerManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.containerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             case ty.contentInstance: {
-                responsePrim = await this.contentInstanceManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.contentInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             case ty.locationPolicy: {
-                responsePrim = await this.locationPolicyManager.primitiveHandler(requestPrimitive, targetResource);
+                result = await this.locationPolicyManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             default:
-                return Dispatcher.makeResponse({
-                    rsc: 5000, //TODO add correct error code
-                    rqi: requestPrimitive["m2m:rqp"].ri,
-                    rvi: requestPrimitive["m2m:rqp"].rvi,
-                    ot: new Date(),
-                    pc: ""
-                })
+                return rsc.NOT_IMPLEMENTED;
         }
 
-        if (![2000, 2001, 2002, 2004].includes(responsePrim["m2m:rsp"].rsc)) {
-            return responsePrim;
+        if (![rsc.OK, rsc.CREATED, rsc.UPDATED, rsc.DELETED].includes(result["m2m:rsp"].rsc)) {
+            return result;
         }
 
         const subs: Subscription[] = await this.checkSubscriptions(targetResource.ri);
         //TODO need to refactor this part, add support for other notificationEventTypes
         for (const sub of subs) {
-            if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitive["m2m:rqp"].op === operationEnum.UPDATE)
-                || (sub.enc.net?.includes(notificationEventType.CREATE) && requestPrimitive["m2m:rqp"].op === operationEnum.CREATE)) {
+            if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)
+                || (sub.enc.net?.includes(notificationEventType.CREATE) && requestPrimitiveData.op === operationEnum.CREATE)) {
                 const prefix: any = resourceTypeToPrefix.get(targetResource.ty)
                 const pc = {
                     "m2m:sgn": {
                         nev:{
                             rep: {
-                                [prefix]: responsePrim["m2m:rsp"].pc
+                                [prefix]: result["m2m:rsp"].pc
                             },
                             net: sub.enc.net
                         },
@@ -280,15 +254,11 @@ export class Dispatcher {
                 }
             }
         }
-        return responsePrim;
+        return result;
     }
 
     checkSubscriptions(resourceId) {
         return this.subscriptionManager.getResourceSubscriptions(resourceId);
-    }
-
-    sendNotification(sub: Subscription) {
-
     }
 
     async discoveryProcedure(fc: filterCriteria, resourceId: string) {
@@ -316,7 +286,10 @@ export class Dispatcher {
                         return pc;
                     }
                     case 4: {
-                        const result: Lookup = await this.lookupRepository.findOneBy({ri: resourceId});
+                        const result: Lookup | null = await this.lookupRepository.findOneBy({ri: resourceId});
+                        if (!result){
+                            return rsc.NOT_FOUND
+                        }
                         const baseResource = await this.getResource(result.ri, result.ty);
 
                         const childResourcesLookup: Lookup[] =  await this.lookupRepository.findBy({pi: resourceId});

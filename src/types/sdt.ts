@@ -1,5 +1,12 @@
 import {Type } from '@sinclair/typebox'
 
+//all containerDefinitions shold be added to here as well
+export const containerDefinitions = [
+    //ModuleClasses
+    "org.onem2m.common.moduleclass.colour",
+    "org.onem2m.common.moduleclass.colourSaturation"
+]
+
 export const sdtSchemaCreate = Type.Union([
     Type.Object({
         "cod:color": Type.Object({

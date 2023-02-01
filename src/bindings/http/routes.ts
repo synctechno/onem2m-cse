@@ -1,9 +1,6 @@
-import {cseConfig} from "../../configs/cse.config.js";
 import {headerSchema} from "./schemas.js";
-import dataSource from '../../database.js'
 import {resourceTypeEnum} from "../../types/types.js";
-import {CseBaseManager} from "../../resources/cseBase/cseBase.manager.js";
-import {httpToPrimitive, primitiveToHtpp} from "../../coverters.js";
+import {httpToPrimitive, primitiveToHtpp} from "./converter.js";
 import {responsePrimitive} from "../../types/primitives.js";
 import {Dispatcher} from "../../dispatcher.js";
 
@@ -18,7 +15,7 @@ export const getRoute = (fastify, options, done) => {
     }, async (req, res) => {
         const reqPrimitive = httpToPrimitive(req);
 
-        const resPrimitive: responsePrimitive = await dispatcher.process(reqPrimitive);
+        const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
         const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
         res.code(statusCode).send(body);
@@ -36,7 +33,7 @@ export const postRoute = (fastify, options, done) => {
         const ty: resourceTypeEnum = Number(req.headers['content-type'].split(';ty=')[1]);
         const reqPrimitive = httpToPrimitive(req, ty, );
 
-        const resPrimitive: responsePrimitive = await dispatcher.process(reqPrimitive);
+        const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
         const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
         res.code(statusCode).send(body);
@@ -53,7 +50,7 @@ export const putRoute = (fastify, options, done) => {
         const ty: resourceTypeEnum = Number(req.headers['content-type'].split(';ty=')[1]);
         const reqPrimitive = httpToPrimitive(req, ty, );
 
-        const resPrimitive: responsePrimitive = await dispatcher.process(reqPrimitive);
+        const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
         const {headers, body} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
         res.send(body);
@@ -67,9 +64,9 @@ export const deleteRoute = (fastify, options, done) => {
             headers: headerSchema
         }
     }, async (req, res) => {
-        const reqPrimitive = httpToPrimitive(req, null, );
+        const reqPrimitive = httpToPrimitive(req, null );
 
-        const resPrimitive: responsePrimitive = await dispatcher.process(reqPrimitive);
+        const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
         const {headers, body} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
         res.send(body);

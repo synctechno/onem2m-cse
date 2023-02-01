@@ -20,17 +20,20 @@ export enum operationEnum{
 // })
 
 export type requestPrimitive = {
-    "m2m:rqp": {
-        op: operationEnum,
-        to: string,
-        fr?: string,
-        ri: string,
-        rvi: string
-        ty: resourceTypeEnum,
-        pc?: any
-        fc?: filterCriteria //TODO define exact parameters
-    }
+    "m2m:rqp": requestPrimitiveData
 }
+
+export type requestPrimitiveData = {
+    op: operationEnum,
+    to: string,
+    fr?: string,
+    ri: string,
+    rvi: string
+    ty: resourceTypeEnum,
+    pc?: any
+    fc?: filterCriteria //TODO define exact parameters
+}
+
 
 export type responsePrimitive = {
     "m2m:rsp": {
