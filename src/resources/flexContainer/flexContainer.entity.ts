@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     resourceTypeEnum
 } from "../../types/types.js"
@@ -24,4 +24,8 @@ export class FlexContainer extends RegularResource {
         type: "json",
         nullable: true})
     ca: any
+
+    static getTy(){
+        return resourceTypeEnum.flexContainer;
+    }
 }

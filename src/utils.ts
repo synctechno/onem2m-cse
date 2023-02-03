@@ -1,4 +1,4 @@
-import {prefixMapType, resourceTypeEnum} from "./types/types.js";
+import {prefixMapType, resourceTypeEnum as ty} from "./types/types.js";
 
 //contentSize in bytes assuming UTF-8 encoding (1 byte)
 export function getContentSize(data: Object | string): number {
@@ -21,20 +21,31 @@ export function getContentSize(data: Object | string): number {
 
 //TODO need to complete prefix mapping
 export const resourceTypeToPrefix: prefixMapType = new Map([
-    [resourceTypeEnum.CSEBase, "m2m:cb"],
-    [resourceTypeEnum.AE, "m2m:ae"],
-    [resourceTypeEnum.accessControlPolicy, "m2m:acp"],
-    [resourceTypeEnum.container, "m2m:cnt"],
-    [resourceTypeEnum.contentInstance, "m2m:cin"],
-    [resourceTypeEnum.subscription, "m2m:sub"],
-    [resourceTypeEnum.flexContainer, "m2m:fcnt"],
-    [resourceTypeEnum.locationPolicy, "m2m:lcp"],
-    [resourceTypeEnum.group, "m2m:grp"],
+    [ty.CSEBase, "m2m:cb"],
+    [ty.AE, "m2m:ae"],
+    [ty.accessControlPolicy, "m2m:acp"],
+    [ty.container, "m2m:cnt"],
+    [ty.contentInstance, "m2m:cin"],
+    [ty.subscription, "m2m:sub"],
+    [ty.flexContainer, "m2m:fcnt"],
+    [ty.locationPolicy, "m2m:lcp"],
+    [ty.group, "m2m:grp"],
 
-    [resourceTypeEnum.delivery, "m2m:x"],
-    [resourceTypeEnum.eventConfig, "m2m:x"],
-    [resourceTypeEnum.execInstance, "m2m:x"],
+    [ty.delivery, "m2m:x"],
+    [ty.eventConfig, "m2m:x"],
+    [ty.execInstance, "m2m:x"],
 ])
+
+export const resourceNameToType = {
+    "CSEBase": ty.CSEBase,
+    "AE": ty.AE,
+    "AccessControlPolicy": ty.accessControlPolicy,
+    "Container": ty.container,
+    "ContentInstance": ty.contentInstance,
+    "Subscription": ty.subscription,
+    "FlexContainer": ty.flexContainer,
+    "LocationPolicy": ty.locationPolicy
+}
 
 export function handleTo(to: string, cseName: string): {
     id: string,

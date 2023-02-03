@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     supportedReleaseVersions,
     resourceTypeEnum
@@ -29,4 +29,8 @@ export class AE extends RegularResource {
 
     @Column("varchar", { array: true, nullable: true })
     srv?: supportedReleaseVersions;
+
+    static getTy(){
+        return resourceTypeEnum.AE;
+    }
 }

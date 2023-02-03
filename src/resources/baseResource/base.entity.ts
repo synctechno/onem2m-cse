@@ -1,11 +1,10 @@
 import {Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn} from "typeorm";
-import {nanoid} from "nanoid";
-import {resourceTypeEnum} from "../types/types";
+import {resourceTypeEnum} from "../../types/types.js";
 
 @Entity()
 export abstract class Resource {
-    @PrimaryColumn({ default: nanoid(8) })
-    readonly ri: string
+    @PrimaryColumn()
+    ri: string
     @Column("varchar", {nullable: true})
     readonly rn: string;
     @Column()
@@ -16,6 +15,8 @@ export abstract class Resource {
     readonly lmt?: Date; //lastModifiedTime
     @Column({nullable: true})
     readonly lbl?: string;
+    @Column()
+    static readonly ty: resourceTypeEnum;
 }
 
 @Entity()

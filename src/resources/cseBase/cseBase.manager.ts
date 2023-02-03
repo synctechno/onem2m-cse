@@ -8,7 +8,7 @@ const SRV: supportedReleaseVersions = ["3"];
 const POA = ["http://127.0.0.1:3000"];
 const CSE_RESOURCE_ID = "KLFHnzxa";
 
-export class CseBaseManager{
+export class CseBaseManager {
     readonly ri = CSE_RESOURCE_ID;
     readonly rn: string;
     readonly csi: string;
@@ -31,7 +31,7 @@ export class CseBaseManager{
         }, 500);
     }
 
-    init = async (ri:string, rn: string, csi: string, pi: string, srv: supportedReleaseVersions, poa: string[]) => {
+    init = async (ri: string, rn: string, csi: string, pi: string, srv: supportedReleaseVersions, poa: string[]) => {
         await this.cseBaseRepository.save({
                 ri,
                 rn,
@@ -39,6 +39,7 @@ export class CseBaseManager{
                 pi,
                 srv,
                 poa,
+                ty: resourceTypeEnum.CSEBase
             }
         );
         await this.lookupRepository.save({
@@ -49,11 +50,11 @@ export class CseBaseManager{
         })
     }
 
-    async handleRequest(op: operationEnum, targetResource): Promise<resultData>{
+    async handleRequest(op: operationEnum, targetResource): Promise<resultData> {
         switch (op) {
-            case operationEnum.RETRIEVE:{
+            case operationEnum.RETRIEVE: {
                 const resource = await this.cseBaseRepository.findOneBy({ri: targetResource.ri});
-                if (!resource){
+                if (!resource) {
                     return rsc.NOT_FOUND;
                 }
                 return {
@@ -61,13 +62,13 @@ export class CseBaseManager{
                     pc: {"m2m:cb": resource}
                 }
             }
-            default:{
+            default: {
                 return rsc.OPERATION_NOT_ALLOWED;
             }
         }
     }
 
-    getResource(ri){
+    getResource(ri) {
         return this.cseBaseRepository.findOneBy({ri});
     }
 }

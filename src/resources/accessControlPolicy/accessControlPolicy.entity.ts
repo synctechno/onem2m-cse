@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     resourceTypeEnum, accessControlRule
 } from "../../types/types.js"
@@ -23,4 +23,8 @@ export class AccessControlPolicy extends RegularResource {
         type: "json",
         nullable: true})
     pvs: accessControlRule[]
+
+    static getTy(){
+        return resourceTypeEnum.accessControlPolicy;
+    }
 }

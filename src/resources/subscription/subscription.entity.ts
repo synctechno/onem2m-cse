@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     resourceTypeEnum,  eventNotificationCriteria
 } from "../../types/types.js"
@@ -21,4 +21,8 @@ export class Subscription extends RegularResource {
 
     @Column("simple-array")
     nu: string[] //notificationURI
+
+    static getTy(){
+        return resourceTypeEnum.subscription;
+    }
 }

@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     resourceTypeEnum
 } from "../../types/types.js"
@@ -19,4 +19,8 @@ export class ContentInstance extends RegularResource {
 
     @Column({default: 0})
     cs: number
+
+    static getTy(){
+        return resourceTypeEnum.contentInstance;
+    }
 }

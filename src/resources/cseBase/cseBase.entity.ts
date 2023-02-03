@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     cseTypeID,
     e2eSecInfo,
@@ -33,4 +33,8 @@ export class CseBase extends RegularResource {
     esi?: e2eSecInfo; //e2eSecInfo is not defined yet
     @Column("varchar", { array: true, nullable: true })
     srv?: supportedReleaseVersions;
+
+    static getTy(){
+        return resourceTypeEnum.CSEBase;
+    }
 }

@@ -48,7 +48,7 @@ export class Dispatcher {
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
-        this.cseBaseManager = new CseBaseManager()
+        this.cseBaseManager = new CseBaseManager(cseConfig.cseName, cseConfig.cseId)
         this.aeManager = new AeManager();
         this.acpManager = new AccessControlPolicyManager();
         this.flexContainerManager = new FlexContainerManager();
@@ -134,17 +134,17 @@ export class Dispatcher {
                 {[parsedTo.structured ? 'structured' : 'ri']: parsedTo.id}
             )
         }
-        //targetResource resource does not exist
+        //targetResource baseResource does not exist
         if (!targetResource) {
             return rsc.NOT_FOUND;
         }
         if (requestPrimitiveData.op === operationEnum.CREATE) {
-            //targetResource resource does not allow this type of child resource
+            //targetResource baseResource does not allow this type of child baseResource
             if (!allowedChildResources.get(targetResource.ty)?.includes(requestPrimitiveData.ty)) {
                 return rsc.INVALID_CHILD_RESOURCE_TYPE;
             }
 
-            //resource with the same resourceName exists
+            //baseResource with the same resourceName exists
             const siblingResources = await this.lookupRepository.findBy({pi: targetResource.ri});
             for (const resource of siblingResources){
                 let rn = resource.structured.split('/').at(-1);
@@ -218,7 +218,9 @@ export class Dispatcher {
                 return rsc.NOT_IMPLEMENTED;
         }
 
-        if (![rsc.OK, rsc.CREATED, rsc.UPDATED, rsc.DELETED].includes(result["m2m:rsp"].rsc)) {
+        const resultRsc = typeof result === "number" ? result : result.rsc
+
+        if (![rsc.OK, rsc.CREATED, rsc.UPDATED, rsc.DELETED].includes(resultRsc)) {
             return result;
         }
 
@@ -232,7 +234,7 @@ export class Dispatcher {
                     "m2m:sgn": {
                         nev:{
                             rep: {
-                                [prefix]: result["m2m:rsp"].pc
+                                [prefix]: result["m2m:rsp"].pc //TODO need to fix
                             },
                             net: sub.enc.net
                         },

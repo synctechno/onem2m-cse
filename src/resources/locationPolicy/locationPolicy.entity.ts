@@ -1,4 +1,4 @@
-import {RegularResource} from "../resource.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {
     locationInformationType,
     locationSource,
@@ -30,4 +30,8 @@ export class LocationPolicy extends RegularResource {
 
     @Column({nullable: true})
     lon: string //locationContainerName
+
+    static getTy(){
+        return resourceTypeEnum.locationPolicy
+    }
 }
