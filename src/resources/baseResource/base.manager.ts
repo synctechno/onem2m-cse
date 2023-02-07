@@ -5,20 +5,20 @@ import {Resource} from "./base.entity.js";
 import {resourceTypeToPrefix} from "../../utils.js";
 
 export abstract class BaseManager<T extends Resource> {
-    private readonly repository: BaseRepository<T>;
+    protected readonly repository: BaseRepository<T>;
     private readonly entityType;
-    private readonly prefix;
+    protected readonly prefix;
 
     protected constructor(entityType: {new(): T}) {
-        this.repository = new BaseRepository(entityType);
+        this.repository = new BaseRepository<T>(entityType);
         this.entityType = entityType;
-        this.prefix = resourceTypeToPrefix.get(this.entityType.getTy()) ;
+        this.prefix = resourceTypeToPrefix.get(new this.entityType().ty);
     }
 
-    async handleRequest(op: operationEnum, pc, targetResource): Promise<resultData> {
+    async handleRequest(op: operationEnum, pc, targetResource, options?): Promise<resultData> {
         switch (op) {
             case operationEnum.CREATE: {
-                return this.create(pc, targetResource);
+                return this.create(pc, targetResource, options);
             }
             case operationEnum.RETRIEVE: {
                 return this.retrieve(targetResource);
@@ -35,7 +35,7 @@ export abstract class BaseManager<T extends Resource> {
         }
     }
 
-    protected async create(pc, targetResource){
+    protected async create(pc, targetResource, options?): Promise<resultData>{
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
 
@@ -49,8 +49,8 @@ export abstract class BaseManager<T extends Resource> {
         }
     }
 
-    protected async retrieve(targetResource){
-        const data = await this.repository.findOne(targetResource.ri)
+    protected async retrieve(targetResource): Promise<resultData>{
+        const data = await this.repository.findOneBy(targetResource.ri)
         if (data === false) {
             return rsc.INTERNAL_SERVER_ERROR;
         }
@@ -63,7 +63,7 @@ export abstract class BaseManager<T extends Resource> {
         }
     }
 
-    protected async update(pc, targetResource){
+    protected async update(pc, targetResource): Promise<resultData>{
         const resource: any = pc[this.prefix];
 
         const data = await this.repository.update(resource, targetResource.ri);
@@ -76,7 +76,7 @@ export abstract class BaseManager<T extends Resource> {
         }
     }
 
-    protected async delete(targetResource){
+    protected async delete(targetResource): Promise<resultData>{
         const data = await this.repository.delete(targetResource.ri)
         if (!data) {
             return rsc.INTERNAL_SERVER_ERROR;
@@ -85,6 +85,6 @@ export abstract class BaseManager<T extends Resource> {
     }
 
     getResource(ri) {
-        return this.repository.findOne(ri);
+        return this.repository.findOneBy(ri);
     }
 }

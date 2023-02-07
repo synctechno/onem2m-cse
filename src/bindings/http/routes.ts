@@ -51,9 +51,9 @@ export const putRoute = (fastify, options, done) => {
         const reqPrimitive = httpToPrimitive(req, ty, );
 
         const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
-        const {headers, body} = primitiveToHtpp(resPrimitive);
+        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
-        res.send(body);
+        res.code(statusCode).send(body);
     })
     done();
 };
@@ -67,9 +67,9 @@ export const deleteRoute = (fastify, options, done) => {
         const reqPrimitive = httpToPrimitive(req, null );
 
         const resPrimitive: responsePrimitive = await dispatcher.primitiveGateway(reqPrimitive);
-        const {headers, body} = primitiveToHtpp(resPrimitive);
+        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
         res.headers = headers;
-        res.send(body);
+        res.code(statusCode).send(body);
     })
     done();
 };

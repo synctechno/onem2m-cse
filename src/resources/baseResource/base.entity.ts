@@ -4,19 +4,19 @@ import {resourceTypeEnum} from "../../types/types.js";
 @Entity()
 export abstract class Resource {
     @PrimaryColumn()
-    ri: string
+    public ri: string
     @Column("varchar", {nullable: true})
-    readonly rn: string;
+    public readonly rn: string;
     @Column()
     readonly pi: string;
     @CreateDateColumn()
-    readonly ct: Date;
+    readonly ct?: Date;
     @UpdateDateColumn({nullable: true})
     readonly lmt?: Date; //lastModifiedTime
     @Column({nullable: true})
     readonly lbl?: string;
-    @Column()
-    static readonly ty: resourceTypeEnum;
+
+    readonly ty: resourceTypeEnum;
 }
 
 @Entity()

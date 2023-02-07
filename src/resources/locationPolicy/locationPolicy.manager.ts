@@ -1,79 +1,54 @@
-import dataSource from '../../database.js'
 import {resourceTypeEnum, resultData, rscEnum as rsc} from "../../types/types.js";
-import {operationEnum} from "../../types/primitives.js";
-import {LocationPolicyRepository} from "./locationPolicy.repository.js";
-import {LookupRepository} from "../lookup/lookup.repository.js";
 import {nanoid} from "nanoid";
-import {ContainerRepository} from "../container/container.repository.js";
+import {BaseManager} from "../baseResource/base.manager.js";
+import {LocationPolicy} from "./locationPolicy.entity.js";
+import {BaseRepository} from "../baseResource/base.repository.js";
+import {Container} from "../container/container.entity.js";
 
-export class LocationPolicyManager {
-    private locationPolicyRepository;
-    private containerRepository;
-    private lookupRepository;
+
+export class LocationPolicyManager extends BaseManager<LocationPolicy>{
+    private readonly containerRepository: BaseRepository<Container>;
 
     constructor() {
-        this.locationPolicyRepository = new LocationPolicyRepository(dataSource);
-        this.containerRepository = new ContainerRepository(dataSource);
-        this.lookupRepository = new LookupRepository(dataSource);
+        super(LocationPolicy);
+        this.containerRepository = new BaseRepository<Container>(Container);
     }
 
-    async handleRequest(op: operationEnum, pc?, targetResource?): Promise<resultData>{
-        switch (op) {
-            case operationEnum.CREATE:{
-                const resource: any = pc["m2m:lcp"];
-                resource.pi = targetResource.ri;
+    protected async create(pc, targetResource, options?): Promise<resultData> {
+        const resource: any = pc[this.prefix];
+        resource.pi = targetResource.ri;
 
-                const ri = nanoid(8);
-                resource.ri = ri;
-                resource.lost = "normal"
+        const ri = nanoid(8);
+        resource.ri = ri;
+        resource.lost = "normal"
 
-                const containerRi = nanoid(8);
-                resource.loi = containerRi;
+        const containerRi = nanoid(8);
+        resource.loi = containerRi;
 
-                const containerName = resource.lon ? resource.lon: 'lcp_' + nanoid(8)
+        const containerName = resource.lon ? resource.lon: 'lcp_' + nanoid(8)
 
-                const containerResource = {
-                    ri: containerRi,
-                    rn: containerName,
-                    pi: resource.pi,
-                    li: ri
-                }
-
-                await this.lookupRepository.save({
-                    ri: containerRi,
-                    pi: targetResource.ri,
-                    structured: targetResource.structured + '/' + containerName,
-                    ty: resourceTypeEnum.container})
-
-                await this.containerRepository.save(containerResource);
-                const data = await this.locationPolicyRepository.save(resource);
-                await this.lookupRepository.save({
-                    ri: ri,
-                    pi: targetResource.ri,
-                    structured: targetResource.structured + '/' + pc["m2m:lcp"].rn,
-                    ty: resourceTypeEnum.locationPolicy })
-
-                return {
-                    rsc: rsc.CREATED,
-                    pc: {"m2m:lcp": data}
-                }
-            }
-            case operationEnum.RETRIEVE:{
-                const resource = await this.locationPolicyRepository.findOneBy({ri: targetResource.ri});
-                if (!resource){
-                    return rsc.NOT_FOUND;
-                }
-                return {
-                    rsc: rsc.OK,
-                    pc: {"m2m:lcp": resource}
-                }
-            }
-            default: {
-                return rsc.OPERATION_NOT_ALLOWED;
-            }
+        const containerResource: Container = {
+            ri: containerRi,
+            rn: containerName,
+            pi: resource.pi,
+            li: ri,
+            cni: 0,
+            cbs: 0,
+            ty: resourceTypeEnum.container
         }
-    }
-    getResource(ri){
-        return this.locationPolicyRepository.findOneBy({ri});
+
+        const lcpResource = await this.repository.create(resource, targetResource);
+        if (!lcpResource){
+            return rsc.INTERNAL_SERVER_ERROR
+        }
+        const cntResource = await this.containerRepository.create(containerResource, targetResource);
+        if (!cntResource){
+            return rsc.INTERNAL_SERVER_ERROR
+        }
+
+        return {
+            rsc: rsc.CREATED,
+            pc: {[this.prefix]: lcpResource}
+        }
     }
 }

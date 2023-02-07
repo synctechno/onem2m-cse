@@ -1,13 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    cseTypeID,
-    e2eSecInfo,
-    serializations,
-    supportedReleaseVersions,
-    resourceTypeEnum
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {cseTypeID, e2eSecInfo, resourceTypeEnum, serializations, supportedReleaseVersions} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("cseBase")
 export class CseBase extends RegularResource {
@@ -16,13 +9,13 @@ export class CseBase extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.CSEBase
         })
-    ty: resourceType;
+    ty = resourceTypeEnum.CSEBase;
     @Column({nullable: true})
     cst?: cseTypeID;
     @Column({nullable: true})
     csi?: string;
     @Column("varchar", { array: true, nullable: true })
-    srt?: resourceType[];
+    srt?: resourceTypeEnum[];
     @Column("varchar", { array: true, nullable: true })
     poa?: string[];
     @Column({nullable: true})
@@ -33,8 +26,4 @@ export class CseBase extends RegularResource {
     esi?: e2eSecInfo; //e2eSecInfo is not defined yet
     @Column("varchar", { array: true, nullable: true })
     srv?: supportedReleaseVersions;
-
-    static getTy(){
-        return resourceTypeEnum.CSEBase;
-    }
 }

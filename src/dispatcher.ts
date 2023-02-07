@@ -13,7 +13,6 @@ import {AeManager} from "./resources/ae/ae.manager.js";
 import {AccessControlPolicyManager} from "./resources/accessControlPolicy/accessControlPolicy.manager.js";
 import {FlexContainerManager} from "./resources/flexContainer/flexContainer.manager.js";
 import {SubscriptionManager} from "./resources/subscription/subscription.manager.js";
-import {Subscription} from "./resources/subscription/subscription.entity.js";
 import {cseConfig} from "./configs/cse.config.js";
 import {request} from "./bindings/mqtt/request.js";
 import {nanoid} from "nanoid";
@@ -23,6 +22,7 @@ import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {ContainerManager} from "./resources/container/container.manager.js";
 import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
 import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.manager.js";
+import {BaseRepository} from "./resources/baseResource/base.repository.js";
 
 const allowedChildResources = new Map([
     [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
@@ -182,7 +182,7 @@ export class Dispatcher {
 
         switch (targetResourceType) {
             case ty.CSEBase: {
-                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, targetResource);
+                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, null, targetResource);
                 break;
             }
             case ty.AE: {
@@ -224,7 +224,11 @@ export class Dispatcher {
             return result;
         }
 
-        const subs: Subscription[] = await this.checkSubscriptions(targetResource.ri);
+        const subs = await this.checkSubscriptions(targetResource.ri);
+
+        if (typeof subs === "number"){
+            return subs;
+        }
         //TODO need to refactor this part, add support for other notificationEventTypes
         for (const sub of subs) {
             if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)

@@ -1,11 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    locationInformationType,
-    locationSource,
-    resourceTypeEnum
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {locationInformationType, locationSource, resourceTypeEnum} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("locationPolicy")
 export class LocationPolicy extends RegularResource {
@@ -14,7 +9,7 @@ export class LocationPolicy extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.locationPolicy
     })
-    ty: resourceType;
+    ty = resourceTypeEnum.locationPolicy;
 
     @Column()
     los: locationSource //locationSource
@@ -30,8 +25,4 @@ export class LocationPolicy extends RegularResource {
 
     @Column({nullable: true})
     lon: string //locationContainerName
-
-    static getTy(){
-        return resourceTypeEnum.locationPolicy
-    }
 }

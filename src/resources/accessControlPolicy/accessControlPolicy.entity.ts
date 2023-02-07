@@ -1,9 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    resourceTypeEnum, accessControlRule
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {accessControlRule, resourceTypeEnum} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("accessControlPolicy")
 export class AccessControlPolicy extends RegularResource {
@@ -12,7 +9,7 @@ export class AccessControlPolicy extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.accessControlPolicy
     })
-    ty: resourceType;
+    ty = resourceTypeEnum.accessControlPolicy;
 
     @Column({
         type: "json",
@@ -23,8 +20,4 @@ export class AccessControlPolicy extends RegularResource {
         type: "json",
         nullable: true})
     pvs: accessControlRule[]
-
-    static getTy(){
-        return resourceTypeEnum.accessControlPolicy;
-    }
 }

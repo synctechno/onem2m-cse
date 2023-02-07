@@ -1,9 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    resourceTypeEnum
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {resourceTypeEnum} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("contentInstance")
 export class ContentInstance extends RegularResource {
@@ -12,15 +9,11 @@ export class ContentInstance extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.contentInstance
     })
-    ty: resourceType;
+    ty = resourceTypeEnum.contentInstance;
 
     @Column()
     con: string
 
     @Column({default: 0})
     cs: number
-
-    static getTy(){
-        return resourceTypeEnum.contentInstance;
-    }
 }

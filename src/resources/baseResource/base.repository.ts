@@ -1,14 +1,14 @@
-import {DeleteResult, EntityManager, ObjectType, UpdateResult} from "typeorm";
+import {DeleteResult, EntityManager, UpdateResult} from "typeorm";
 import {Lookup} from "../lookup/lookup.entity.js";
 import {Resource} from "./base.entity.js";
 import {nanoid} from "nanoid";
 import dataSource from '../../database.js'
 
-export class BaseRepository<T extends Resource> {
+export class BaseRepository<T extends Resource & {ty: number}> {
     readonly entityManager: EntityManager;
-    readonly entityType;
+    readonly entityType: {new(): T};
 
-    constructor(entityType: ObjectType<T>) {
+    constructor(entityType: {new(): T}) {
         this.entityManager = dataSource.createEntityManager();
         this.entityType = entityType;
     }
@@ -19,11 +19,13 @@ export class BaseRepository<T extends Resource> {
                 resource.ri = nanoid(8);
             }
             const data = await this.entityManager.save(this.entityType, resource);
+            const temp_obj = new this.entityType();
             await this.entityManager.save(Lookup, {
                 ri: resource.ri,
                 pi: targetResource.ri,
-                structured: targetResource.structured + '/' + resource.rn,
-                ty: this.entityType.getTy()
+                structured: targetResource.structured ?
+                    targetResource.structured + '/' + resource.rn : resource.rn,
+                ty: new this.entityType().ty
             } as Lookup);
             return data;
         } catch (e) {
@@ -32,22 +34,40 @@ export class BaseRepository<T extends Resource> {
         }
     }
 
-    async findOne(id: string) {
+    async findOneBy(id) {
         try {
-            return this.entityManager.findOneBy(this.entityType, {ri: id});
+            return this.entityManager.findOneBy<T>(this.entityType, {ri: id});
         } catch (e) {
             console.log(e);
             return false;
         }
     }
 
-    async update(resource: T, id: string) {
+    async findBy(where) {
         try {
-            const updateResult: UpdateResult = await this.entityManager.update(this.entityType, id, resource);
+            return this.entityManager.findBy<T>(this.entityType, where);
+        } catch (e) {
+            console.log(e);
+            return false;
+        }
+    }
+
+    async findOne(options) {
+        try {
+            return this.entityManager.findOne<T>(this.entityType, options);
+        } catch (e) {
+            console.log(e);
+            return false;
+        }
+    }
+
+    async update(resource, id) {
+        try {
+            const updateResult: UpdateResult = await this.entityManager.update<T>(this.entityType, id, resource);
             if (updateResult.affected !== 1){
                 return false;
             }
-            return this.entityManager.findOneBy(this.entityType, {ri: id});
+            return this.entityManager.findOneBy<T>(this.entityType, {ri: id});
         } catch (e) {
             console.log(e);
             return false;
@@ -56,7 +76,7 @@ export class BaseRepository<T extends Resource> {
 
     async delete(id: string) {
         try {
-            const deleteResult: DeleteResult = await this.entityManager.delete(this.entityType, id);
+            const deleteResult: DeleteResult = await this.entityManager.delete<T>(this.entityType, id);
             await this.entityManager.delete(Lookup, id);
 
             return deleteResult.affected === 1;

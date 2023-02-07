@@ -1,8 +1,5 @@
-import {
-    resourceTypeEnum
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column, PrimaryColumn} from "typeorm";
+import {resourceTypeEnum} from "../../types/types.js"
+import {Column, Entity, PrimaryColumn} from "typeorm";
 
 @Entity("lookup")
 export class Lookup {
@@ -16,5 +13,5 @@ export class Lookup {
         type: "enum",
         enum: resourceTypeEnum
         })
-    readonly ty: resourceType;
+    readonly ty: resourceTypeEnum;
 }

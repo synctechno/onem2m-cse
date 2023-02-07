@@ -1,10 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    supportedReleaseVersions,
-    resourceTypeEnum
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {resourceTypeEnum, supportedReleaseVersions} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("ae")
 export class AE extends RegularResource {
@@ -13,7 +9,7 @@ export class AE extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.AE
     })
-    ty: resourceType;
+    ty = resourceTypeEnum.AE;
 
     @Column({nullable: true})
     api: string
@@ -29,8 +25,4 @@ export class AE extends RegularResource {
 
     @Column("varchar", { array: true, nullable: true })
     srv?: supportedReleaseVersions;
-
-    static getTy(){
-        return resourceTypeEnum.AE;
-    }
 }

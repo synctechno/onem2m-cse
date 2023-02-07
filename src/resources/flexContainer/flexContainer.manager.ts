@@ -1,113 +1,113 @@
-import dataSource from '../../database.js'
 import {resourceTypeEnum, resultData, rscEnum, rscEnum as rsc} from "../../types/types.js";
-import {operationEnum} from "../../types/primitives.js";
-import {FlexContainerRepository} from "./flexContainer.repository.js";
-import {LookupRepository} from "../lookup/lookup.repository.js";
 import {nanoid} from "nanoid";
 import {getContentSize} from "../../utils.js";
 import {TypeCompiler} from '@sinclair/typebox/compiler'
 import {containerDefinitions, sdtSchemaCreate, sdtSchemaUpdate} from "../../types/sdt.js";
+import {BaseManager} from "../baseResource/base.manager.js";
+import {FlexContainer} from "./flexContainer.entity.js";
 
 const sdtCreateValidator = TypeCompiler.Compile(sdtSchemaCreate);
 const sdtUpdateValidator = TypeCompiler.Compile(sdtSchemaUpdate);
 
 
-
-export class FlexContainerManager {
-    private flexContainerRepository;
-    private lookupRepository;
-
+export class FlexContainerManager extends BaseManager<FlexContainer>{
     constructor() {
-        this.flexContainerRepository = new FlexContainerRepository(dataSource);
-        this.lookupRepository = new LookupRepository(dataSource);
+        super(FlexContainer);
     }
 
-    async handleRequest(op: operationEnum, pc?, targetResource?): Promise<resultData> {
-        switch (op){
-            case operationEnum.CREATE: {
-                const prefix = Object.keys(pc)[0];
-                //validations
-                if (!containerDefinitions.includes(pc[prefix].cnd)){
-                    return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
-                }
-                if (!sdtCreateValidator.Check(pc)){
-                    return rsc.BAD_REQUEST;
-                }
+    protected async create(pc, targetResource, options?): Promise<resultData> {
+        const prefix = Object.keys(pc)[0];
+        //validations
+        if (!containerDefinitions.includes(pc[prefix].cnd)){
+            return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
+        }
+        if (!sdtCreateValidator.Check(pc)){
+            return rsc.BAD_REQUEST;
+        }
 
-                const {rn, cnd, ...ca} = pc[prefix];
-                const ri = nanoid(8)
-                //copy without reference
-                let resource = {
-                    pi: targetResource.ri,
-                    ri,
-                    rn,
-                    cnd,
-                    ca,
-                    cs: getContentSize(ca)
-                };
+        const {rn, cnd, ...ca} = pc[prefix];
+        const ri = nanoid(8)
+        //copy without reference
+        let resource = {
+            pi: targetResource.ri,
+            ri,
+            rn,
+            cnd,
+            ca,
+            cs: getContentSize(ca),
+            ty: resourceTypeEnum.flexContainer
+        };
 
-                const {ca: caFromDb, ...rest} = await this.flexContainerRepository.save(resource);
-                await this.lookupRepository.save({
-                    ri,
-                    pi: targetResource.ri,
-                    structured: targetResource.structured + '/' + pc[prefix].rn,
-                    ty: resourceTypeEnum.flexContainer
-                })
+        const data = await this.repository.create(resource, targetResource);
+        if (!data){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        const {ca: caFromDb, ...rest} = data;
 
-                return {
-                    rsc: rsc.CREATED,
-                    pc: {...rest, ...caFromDb}
-                }
-            }
-            case operationEnum.RETRIEVE: {
-                const {ca: caFromDb, ...rest} = await this.flexContainerRepository.findOneBy({ri: targetResource.ri});
-                if (!rest){
-                    return rsc.NOT_FOUND;
-                }
-                return {
-                    rsc: rsc.OK,
-                    pc: {"m2m:fcnt": {...rest, ...caFromDb}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
-                }
-            }
-            case operationEnum.UPDATE: {
-                const prefix = Object.keys(pc)[0];
-                //validations
-                if (!containerDefinitions.includes(pc[prefix].cnd)){
-                    return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
-                }
-                if (!sdtCreateValidator.Check(pc)){
-                    return rsc.BAD_REQUEST;
-                }
-                const {rn, cnd, ...ca} = pc[prefix];
-
-                let resource = await this.flexContainerRepository.findOneBy({ri: targetResource.ri});
-                let {ca: caFromDb, ...rest} = resource;
-                const updatedCa = {...caFromDb, ...ca};
-
-                if (ca){
-                    resource.ca = updatedCa;
-                    resource.cs = getContentSize(updatedCa)
-                }
-                if (rn) {
-                    resource.rn = rn;
-                }
-                if (cnd) {
-                    resource.cnd = cnd;
-                }
-
-                const {ca: savedCa, ...savedRest} = await this.flexContainerRepository.save(resource);
-                return {
-                    rsc: rsc.UPDATED,
-                    pc: {"m2m:fcnt": {...savedRest, ...savedCa}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
-                }
-            }
-            default: {
-                return rsc.OPERATION_NOT_ALLOWED;
-            }
+        return {
+            rsc: rsc.CREATED,
+            pc: {...rest, ...caFromDb}
         }
     }
-    async getResource(ri){
-        const {ca: caFromDb, ...rest} =  this.flexContainerRepository.findOneBy({ri});
+
+    protected async retrieve(targetResource): Promise<resultData> {
+        const data = await this.repository.findOneBy(targetResource.ri);
+        if (!data){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        const {ca: caFromDb, ...rest} = data;
+        if (!rest){
+            return rsc.NOT_FOUND;
+        }
+        return {
+            rsc: rsc.OK,
+            pc: {"m2m:fcnt": {...rest, ...caFromDb}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
+        }
+    }
+
+    protected async update(pc, targetResource): Promise<resultData> {
+        const prefix = Object.keys(pc)[0];
+        //validations
+        if (!containerDefinitions.includes(pc[prefix].cnd)){
+            return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
+        }
+        if (!sdtUpdateValidator.Check(pc)){
+            return rsc.BAD_REQUEST;
+        }
+        const {rn, cnd, ...ca} = pc[prefix];
+
+        const data = await this.repository.findOneBy(targetResource.ri);
+        if (!data){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        let {ca: caFromDb, ...rest} = data;
+        const updatedCa = {...caFromDb, ...ca};
+
+        if (ca){
+            data.ca = updatedCa;
+            data.cs = getContentSize(updatedCa)
+        }
+        if (cnd) {
+            data.cnd = cnd;
+        }
+
+        const updateResult = await this.repository.update(data, targetResource.ri);
+        if (!updateResult){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        const {ca: savedCa, ...savedRest} = updateResult;
+        return {
+            rsc: rsc.UPDATED,
+            pc: {"m2m:fcnt": {...savedRest, ...savedCa}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
+        }
+    }
+
+    async getResource(ri) {
+        const data =  await this.repository.findOneBy(ri);
+        if (!data){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        const {ca: caFromDb, ...rest} = data;
         return {...rest, ...caFromDb}
     }
 }

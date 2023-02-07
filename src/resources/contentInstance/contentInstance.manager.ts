@@ -1,73 +1,80 @@
-import dataSource from '../../database.js'
-import {resourceTypeEnum, resultData, rscEnum as rsc} from "../../types/types.js";
-import {operationEnum} from "../../types/primitives.js";
-import {ContainerRepository} from "../container/container.repository.js";
-import {ContentInstanceRepository} from "./contentInstance.repository.js";
-import {LookupRepository} from "../lookup/lookup.repository.js";
+import {resultData, rscEnum as rsc} from "../../types/types.js";
 import {nanoid} from "nanoid";
 import {getContentSize} from "../../utils.js";
 import {Container} from "../container/container.entity.js";
+import {BaseManager} from "../baseResource/base.manager.js";
+import {ContentInstance} from "./contentInstance.entity.js";
+import {BaseRepository} from "../baseResource/base.repository.js";
 
-export class ContentInstanceManager {
-    private containerRepository;
-    private contentInstanceRepository
-    private lookupRepository;
+export class ContentInstanceManager extends BaseManager<ContentInstance>{
+    private readonly containerRepository: BaseRepository<Container>;
 
     constructor() {
-        this.containerRepository = new ContainerRepository(dataSource);
-        this.contentInstanceRepository = new ContentInstanceRepository(dataSource);
-        this.lookupRepository = new LookupRepository(dataSource);
+        super(ContentInstance);
+        this.containerRepository = new BaseRepository<Container>(Container);
     }
 
-    async handleRequest(op: operationEnum, pc?, targetResource?): Promise<resultData>{
-        switch (op) {
-            case operationEnum.CREATE:{
-                const resource: any = pc["m2m:cin"];
-                resource.pi = targetResource.ri;
-                resource.rn = 'cin_' + nanoid(8)
+    protected async create(pc, targetResource, options?): Promise<resultData> {
+        const resource: any = pc["m2m:cin"];
+        resource.pi = targetResource.ri;
+        resource.rn = 'cin_' + nanoid(8)
+        resource.ri = nanoid(8);
+        resource.cs = getContentSize(resource.con)
 
-                const ri = nanoid(8);
-                resource.ri = ri;
-                resource.cs = getContentSize(resource.con)
+        const data = await this.repository.create(resource, targetResource);
 
-                const data = await this.contentInstanceRepository.save(resource);
-                await this.lookupRepository.save({
-                    ri: ri,
-                    pi: targetResource.ri,
-                    structured: targetResource.structured + '/' + pc["m2m:cin"].rn,
-                    ty: resourceTypeEnum.contentInstance })
+        const parentContainer = await this.containerRepository.findOneBy(targetResource.ri);
+        if (!parentContainer){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        parentContainer.cbs += resource.cs;
+        parentContainer.cni ++;
+        await this.containerRepository.update(parentContainer, targetResource.ri)
 
-                const parentContainer: Container = await this.containerRepository.findOneBy({ri: targetResource.ri})
-                parentContainer.cbs += resource.cs;
-                parentContainer.cni ++;
-                await this.containerRepository.save(parentContainer)
-
-                return {
-                    rsc: rsc.CREATED,
-                    pc: {"m2m:cin": data}
-                }
-            }
-            case operationEnum.RETRIEVE:{
-                let resource;
-                if (!targetResource.olla){
-                    resource = await this.contentInstanceRepository.findOneBy({ri: targetResource.ri});
-                } else {
-                    resource = await this.contentInstanceRepository.findOne(
-                        {where: {pi: targetResource.pi},
-                            order: {ct: targetResource.olla == 'ol' ? 'ASC' : 'DESC'}});
-                }
-                return {
-                    rsc: rsc.OK,
-                    pc: {"m2m:cin": resource}
-                }
-            }
-            default: {
-                return rsc.OPERATION_NOT_ALLOWED;
-            }
+        return {
+            rsc: rsc.CREATED,
+            pc: {"m2m:cin": data}
         }
     }
 
-    getResource(ri){
-        return this.contentInstanceRepository.findOneBy({ri});
+    protected async retrieve(targetResource): Promise<resultData> {
+        let resource;
+        if (!targetResource.olla){
+            resource = await this.repository.findOneBy(targetResource.ri);
+        } else {
+            resource = await this.repository.findOne(
+                {where: {pi: targetResource.pi},
+                    order: {ct: targetResource.olla == 'ol' ? 'ASC' : 'DESC'}});
+        }
+        return {
+            rsc: rsc.OK,
+            pc: {"m2m:cin": resource}
+        }
+    }
+
+    protected async update(pc, targetResource): Promise<resultData> {
+        return rsc.OPERATION_NOT_ALLOWED
+    }
+
+    //before deleting the cin, parent container resource attributes, cbs and cni, need to be updated
+    protected async delete(targetResource): Promise<resultData> {
+        const contentInstance = await this.repository.findOneBy(targetResource.id);
+        if (!contentInstance){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        const parentContainer = await this.containerRepository.findOneBy(targetResource.pi);
+        if (!parentContainer){
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+
+        parentContainer.cbs -= contentInstance.cs;
+        parentContainer.cni --;
+        await this.containerRepository.update(parentContainer, targetResource.pi)
+
+        const data = await this.repository.delete(targetResource.ri);
+        if (!data) {
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
+        return rsc.DELETED;
     }
 }

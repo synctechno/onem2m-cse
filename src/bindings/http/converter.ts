@@ -37,9 +37,6 @@ export function httpToPrimitive(req, ty?): requestPrimitive {
 }
 
 export function primitiveToHtpp(primitive: responsePrimitive) {
-    // let body;
-    // const prefix:any = resourceTypeToPrefix.get(primitive["m2m:rsp"].ty);
-    // body = {[prefix]: primitive["m2m:rsp"].pc}
     const body = primitive["m2m:rsp"].pc;
 
     return {

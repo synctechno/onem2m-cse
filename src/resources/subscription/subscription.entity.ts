@@ -1,9 +1,6 @@
 import {RegularResource} from "../baseResource/base.entity.js";
-import {
-    resourceTypeEnum,  eventNotificationCriteria
-} from "../../types/types.js"
-import {resourceType} from "../../types/ts-types.js"
-import {Entity, Column} from "typeorm";
+import {eventNotificationCriteria, resourceTypeEnum} from "../../types/types.js"
+import {Column, Entity} from "typeorm";
 
 @Entity("subscription")
 export class Subscription extends RegularResource {
@@ -12,7 +9,7 @@ export class Subscription extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.subscription
     })
-    ty: resourceType;
+    ty = resourceTypeEnum.subscription;
 
     @Column({
         type: "json",
@@ -21,8 +18,4 @@ export class Subscription extends RegularResource {
 
     @Column("simple-array")
     nu: string[] //notificationURI
-
-    static getTy(){
-        return resourceTypeEnum.subscription;
-    }
 }
