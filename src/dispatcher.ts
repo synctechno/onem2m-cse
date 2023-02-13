@@ -421,9 +421,10 @@ export class Dispatcher {
         }
         let aggregatedResponse: { "m2m:agr": responsePrimitive[] } = {"m2m:agr": []};
         //for each member, make a new primitive request (recursively for fopt members)
+        const childFopt = requestPrimitiveData.to.split('/fopt') ;
         try {
             for (const memberResource of group.mid) {
-                requestPrimitiveData.to = memberResource;
+                requestPrimitiveData.to = memberResource + childFopt[1];
                 const member_response = await this.primitiveGateway({"m2m:rqp": requestPrimitiveData})
                 aggregatedResponse["m2m:agr"].push(member_response);
             }
