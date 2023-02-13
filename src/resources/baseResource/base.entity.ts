@@ -8,11 +8,11 @@ export abstract class Resource {
     @Column("varchar", {nullable: true})
     public readonly rn: string;
     @Column()
-    readonly pi: string;
+    pi: string;
     @CreateDateColumn()
     readonly ct?: Date;
     @UpdateDateColumn({nullable: true})
-    readonly lmt?: Date; //lastModifiedTime
+    readonly lt?: Date; //lastModifiedTime
     @Column({nullable: true})
     readonly lbl?: string;
 

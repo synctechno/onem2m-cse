@@ -9,6 +9,7 @@ import {Subscription} from "./resources/subscription/subscription.entity.js";
 import {Container} from "./resources/container/container.entity.js";
 import {ContentInstance} from "./resources/contentInstance/contentInstance.entity.js";
 import {LocationPolicy} from "./resources/locationPolicy/locationPolicy.entity.js";
+import {Group} from "./resources/group/group.entity.js";
 
 const CseDataSource = new DataSource({
     type: "postgres",
@@ -26,7 +27,8 @@ const CseDataSource = new DataSource({
         Subscription,
         Container,
         ContentInstance,
-        LocationPolicy
+        LocationPolicy,
+        Group,
     ],
     synchronize: true
 })

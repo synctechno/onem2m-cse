@@ -31,9 +31,9 @@ export const resourceTypeToPrefix: prefixMapType = new Map([
     [ty.locationPolicy, "m2m:lcp"],
     [ty.group, "m2m:grp"],
 
-    [ty.delivery, "m2m:x"],
-    [ty.eventConfig, "m2m:x"],
-    [ty.execInstance, "m2m:x"],
+    // [ty.delivery, "m2m:x"],
+    // [ty.eventConfig, "m2m:x"],
+    // [ty.execInstance, "m2m:x"],
 ])
 
 export const resourceNameToType = {
@@ -106,3 +106,16 @@ export function handleTo(to: string, cseName: string): {
         }
     }
 }
+
+export const allowedChildResources = new Map([
+    [ty.mixed, []],
+    [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.group]],
+    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.subscription, ty.locationPolicy, ty.group]],
+    [ty.accessControlPolicy, [ty.subscription]],
+    [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container]],
+    [ty.subscription, []],
+    [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription]],
+    [ty.contentInstance, []],
+    [ty.locationPolicy, [ty.subscription]],
+    [ty.group, [ty.subscription],]
+]);

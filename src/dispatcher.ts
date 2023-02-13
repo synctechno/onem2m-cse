@@ -1,39 +1,19 @@
 import {operationEnum, requestPrimitive, requestPrimitiveData, responsePrimitive} from "./types/primitives.js";
 import dataSource from "./database.js";
 import {LookupRepository} from "./resources/lookup/lookup.repository.js";
-import {
-    filterCriteria,
-    notificationEventType,
-    resourceTypeEnum,
-    resourceTypeEnum as ty,
-    resultData,
-    rscEnum as rsc
-} from "./types/types.js";
+import {filterCriteria, resourceTypeEnum, resourceTypeEnum as ty, resultData, rscEnum as rsc} from "./types/types.js";
 import {AeManager} from "./resources/ae/ae.manager.js";
 import {AccessControlPolicyManager} from "./resources/accessControlPolicy/accessControlPolicy.manager.js";
 import {FlexContainerManager} from "./resources/flexContainer/flexContainer.manager.js";
 import {SubscriptionManager} from "./resources/subscription/subscription.manager.js";
 import {cseConfig} from "./configs/cse.config.js";
-import {request} from "./bindings/mqtt/request.js";
-import {nanoid} from "nanoid";
-import {handleTo, resourceTypeToPrefix} from "./utils.js";
+import {allowedChildResources, handleTo, resourceTypeToPrefix} from "./utils.js";
 import {Lookup} from "./resources/lookup/lookup.entity.js";
 import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
 import {ContainerManager} from "./resources/container/container.manager.js";
 import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
 import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.manager.js";
-import {BaseRepository} from "./resources/baseResource/base.repository.js";
-
-const allowedChildResources = new Map([
-    [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy]],
-    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.subscription, ty.locationPolicy]],
-    [ty.accessControlPolicy, [ty.subscription]],
-    [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container]],
-    [ty.subscription, []],
-    [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription]],
-    [ty.contentInstance, []],
-    [ty.locationPolicy, [ty.subscription]]
-]);
+import {GroupManager} from "./resources/group/group.manager.js";
 
 export class Dispatcher {
     private lookupRepository: LookupRepository;
@@ -45,6 +25,7 @@ export class Dispatcher {
     private containerManager: ContainerManager;
     private contentInstanceManager: ContentInstanceManager;
     private locationPolicyManager: LocationPolicyManager;
+    private groupManager: GroupManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -56,13 +37,14 @@ export class Dispatcher {
         this.containerManager = new ContainerManager();
         this.contentInstanceManager = new ContentInstanceManager();
         this.locationPolicyManager = new LocationPolicyManager();
+        this.groupManager = new GroupManager();
     }
 
     async primitiveGateway(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
         const primitiveData = requestPrimitive["m2m:rqp"]
         const result = await this.process(primitiveData);
         let rsc, pc;
-        if (typeof result === "number"){
+        if (typeof result === "number") {
             rsc = result;
         } else {
             rsc = result.rsc;
@@ -82,29 +64,39 @@ export class Dispatcher {
 
     async process(requestPrimitiveData: requestPrimitiveData): Promise<resultData> {
         //if fr is empty, response BAD_REQUEST (except for CREATE AE operation)
-        if (!requestPrimitiveData.fr && !(requestPrimitiveData.op === operationEnum.CREATE && requestPrimitiveData.ty === ty.AE)){
+        if (!requestPrimitiveData.fr && !(requestPrimitiveData.op === operationEnum.CREATE && requestPrimitiveData.ty === ty.AE)) {
             return rsc.BAD_REQUEST;
         }
         //if fr is not type of AE-ID-Stem (does not start with 'C' or 'S'), response BAD_REQUEST
-        if (!requestPrimitiveData.fr!.startsWith('C') && !requestPrimitiveData.fr!.startsWith('S')){
+        if (!requestPrimitiveData.fr!.startsWith('C') && !requestPrimitiveData.fr!.startsWith('S')) {
             return rsc.BAD_REQUEST;
         }
 
         const to = requestPrimitiveData.to;
         const parsedTo = handleTo(to, cseConfig.cseName);
-        if (parsedTo === null){
+        if (parsedTo === null) {
             return rsc.NOT_FOUND;
         } else if (parsedTo.spId) {
             if (parsedTo.spId !== cseConfig.spId) {
                 //TODO handle the case when M2M-SP-ID is different from the configured one, e.g. forward to another CSE
                 return rsc.NOT_IMPLEMENTED
             }
-        } else if (parsedTo.cseId){
+        } else if (parsedTo.cseId) {
             if (parsedTo.cseId !== cseConfig.cseId) {
                 //TODO handle the case when Relative CSE-ID is different from the configured one, e.g. forward to another CSE
                 return rsc.NOT_IMPLEMENTED
             }
         }
+
+        //fopt processing start
+        const foptData = await this.checkFoptRequest(parsedTo);
+        if (foptData.rsc) {
+            return foptData.rsc;
+        }
+        if (foptData.fopt) {
+            return await this.handleFoptRequest(requestPrimitiveData, foptData.groupLookup!)
+        }
+        //fopt processing end
 
         let targetResource;
         //check if oldest or latest
@@ -116,10 +108,10 @@ export class Dispatcher {
             const parentResource = await this.lookupRepository.findOneBy({
                 [parsedTo.structured ? 'structured' : 'ri']: parsedTo.id.slice(0, lastIndex)
             })
-            if (!parentResource){
+            if (!parentResource) {
                 return rsc.NOT_FOUND;
             }
-            if (parentResource.ty !== resourceTypeEnum.container){
+            if (parentResource.ty !== resourceTypeEnum.container) {
                 return rsc.NOT_FOUND;
             }
             targetResource = {
@@ -146,10 +138,10 @@ export class Dispatcher {
 
             //baseResource with the same resourceName exists
             const siblingResources = await this.lookupRepository.findBy({pi: targetResource.ri});
-            for (const resource of siblingResources){
+            for (const resource of siblingResources) {
                 let rn = resource.structured.split('/').at(-1);
                 const prefix = Object.keys(requestPrimitiveData['pc'])[0]
-                if (requestPrimitiveData['pc'][prefix].rn === rn){
+                if (requestPrimitiveData['pc'][prefix].rn === rn) {
                     return rsc.CONFLICT;
                 }
             }
@@ -161,7 +153,7 @@ export class Dispatcher {
             if (!operationPrivileges.get(requestPrimitiveData.op)) {
                 return rsc.ORIGINATOR_HAS_NO_PRIVILEGE;
             }
-        } else if (targetResource.ty === resourceTypeEnum.accessControlPolicy){
+        } else if (targetResource.ty === resourceTypeEnum.accessControlPolicy) {
             const operationPrivileges = await this.acpManager.checkPrivileges(requestPrimitiveData.fr, targetResource.acpi);
             if (!operationPrivileges.get(requestPrimitiveData.op)) {
                 return rsc.ORIGINATOR_HAS_NO_PRIVILEGE;
@@ -171,9 +163,9 @@ export class Dispatcher {
         const targetResourceType: resourceTypeEnum = requestPrimitiveData.op === operationEnum.CREATE ?
             requestPrimitiveData.ty : targetResource.ty
 
-        if (requestPrimitiveData.op === operationEnum.RETRIEVE && Object.keys(requestPrimitiveData.fc as Object).length !== 0){
+        if (requestPrimitiveData.op === operationEnum.RETRIEVE && Object.keys(requestPrimitiveData.fc as Object).length !== 0) {
             const pc = await this.discoveryProcedure(requestPrimitiveData.fc!, targetResource.ri);
-            if (pc){
+            if (pc) {
                 return {pc, rsc: rsc.OK}
             }
         }
@@ -214,6 +206,10 @@ export class Dispatcher {
                 result = await this.locationPolicyManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
+            case ty.group: {
+                result = await this.groupManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                break;
+            }
             default:
                 return rsc.NOT_IMPLEMENTED;
         }
@@ -226,40 +222,40 @@ export class Dispatcher {
 
         const subs = await this.checkSubscriptions(targetResource.ri);
 
-        if (typeof subs === "number"){
+        if (typeof subs === "number") {
             return subs;
         }
         //TODO need to refactor this part, add support for other notificationEventTypes
-        for (const sub of subs) {
-            if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)
-                || (sub.enc.net?.includes(notificationEventType.CREATE) && requestPrimitiveData.op === operationEnum.CREATE)) {
-                const prefix: any = resourceTypeToPrefix.get(targetResource.ty)
-                const pc = {
-                    "m2m:sgn": {
-                        nev:{
-                            rep: {
-                                [prefix]: result["m2m:rsp"].pc //TODO need to fix
-                            },
-                            net: sub.enc.net
-                        },
-                        sur: sub.ri
-                    }
-                }
-                for (const notificationUrl of sub.nu){
-                    request({
-                        "m2m:rqp": {
-                            op: operationEnum.NOTIFY,
-                            fr: cseConfig.cseId,
-                            to: notificationUrl,
-                            ri: nanoid(10),
-                            rvi: 3,
-                            ty: targetResource.ty,
-                            pc: pc
-                        }
-                    })
-                }
-            }
-        }
+        // for (const sub of subs) {
+        //     if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)
+        //         || (sub.enc.net?.includes(notificationEventType.CREATE) && requestPrimitiveData.op === operationEnum.CREATE)) {
+        //         const prefix: any = resourceTypeToPrefix.get(targetResource.ty)
+        //         const pc = {
+        //             "m2m:sgn": {
+        //                 nev:{
+        //                     rep: {
+        //                         [prefix]: result.pc //TODO need to fix
+        //                     },
+        //                     net: sub.enc.net
+        //                 },
+        //                 sur: sub.ri
+        //             }
+        //         }
+        //         for (const notificationUrl of sub.nu){
+        //             request({
+        //                 "m2m:rqp": {
+        //                     op: operationEnum.NOTIFY,
+        //                     fr: cseConfig.cseId,
+        //                     to: notificationUrl,
+        //                     ri: nanoid(10),
+        //                     rvi: 3,
+        //                     ty: targetResource.ty,
+        //                     pc: pc
+        //                 }
+        //             })
+        //         }
+        //     }
+        // }
         return result;
     }
 
@@ -272,7 +268,7 @@ export class Dispatcher {
         switch (Number(fc.fu)) {
             case 1: { //discovery
                 const result: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
-                switch (Number(fc?.rcn)){
+                switch (Number(fc?.rcn)) {
                     case 8: {
                         let pc: Object = {
                             "m2m:rrl": {
@@ -293,7 +289,7 @@ export class Dispatcher {
                     }
                     case 4: {
                         const result: Lookup | null = await this.lookupRepository.findOneBy({ri: resourceId});
-                        if (!result){
+                        if (!result) {
                             return rsc.NOT_FOUND
                         }
                         const baseResource = await this.getResource(result.ri, result.ty);
@@ -320,7 +316,7 @@ export class Dispatcher {
         }
     }
 
-    async getResource(ri: string, ty: resourceTypeEnum){
+    async getResource(ri: string, ty: resourceTypeEnum) {
         switch (ty) {
             case resourceTypeEnum.CSEBase: {
                 return this.cseBaseManager.getResource(ri);
@@ -346,6 +342,90 @@ export class Dispatcher {
             case resourceTypeEnum.locationPolicy: {
                 return this.locationPolicyManager.getResource(ri);
             }
+            case resourceTypeEnum.group: {
+                return this.groupManager.getResource(ri);
+            }
+        }
+    }
+
+
+    async checkFoptRequest(parsedTo: {
+        id: string,
+        structured: boolean,
+        cseId?: string,
+        spId?: string
+    }): Promise<{
+        fopt: boolean,
+        rsc?: rsc,
+        groupLookup?: Lookup
+    }> {
+        const idParts = parsedTo.id.split('/')
+        for (let i = 0; i < idParts.length; i++) {
+            if (idParts[i] === 'fopt') {
+                if (idParts.length === 1) {
+                    return {
+                        fopt: true,
+                        rsc: rsc.BAD_REQUEST
+                    };
+                }
+                //cut the parsedTo.id until fopt to get the group path
+                let lookupId = parsedTo.id.split('/fopt')[0];
+                const parentResource = await this.lookupRepository.findOneBy(
+                    {[parsedTo.structured ? 'structured' : 'ri']: lookupId}
+                )
+                if (!parentResource) {
+                    return {
+                        fopt: true,
+                        rsc: rsc.NOT_FOUND
+                    }
+                }
+                if (parentResource.ty !== resourceTypeEnum.group) {
+                    return {
+                        fopt: true,
+                        rsc: rsc.BAD_REQUEST
+                    };
+                }
+                return {
+                    fopt: true,
+                    groupLookup: parentResource
+                };
+            }
+        }
+        return {
+            fopt: false
+        }
+    }
+
+    async handleFoptRequest(requestPrimitiveData: requestPrimitiveData, targetResource: Lookup, options?): Promise<resultData> {
+        const group = await this.getResource(targetResource.ri, resourceTypeEnum.group)
+        if (!group) {
+            return rsc.NOT_FOUND;
+        }
+        if (group.mid.length === 0) {
+            return rsc.NO_MEMBERS;
+        }
+        if (requestPrimitiveData.op === operationEnum.CREATE && group.mt !== resourceTypeEnum.mixed) {
+            if (!allowedChildResources.get(group.mt)!.includes(requestPrimitiveData.ty)) {
+                return rsc.INVALID_CHILD_RESOURCE_TYPE;
+            }
+        }
+        let aggregatedResponse: { "m2m:agr": responsePrimitive[] } = {"m2m:agr": []};
+        //for each member, make a new primitive request (recursively for fopt members)
+        try {
+            for (const memberResource of group.mid) {
+                requestPrimitiveData.to = memberResource;
+                const member_response = await this.primitiveGateway({"m2m:rqp": requestPrimitiveData})
+                aggregatedResponse["m2m:agr"].push(member_response);
+            }
+            //TODO resolve adding to array issue
+            // for (let i = 0; i < group.mid.length; i++){
+            //     requestPrimitiveData.to = group.mid[i];
+            //     const member_response = await this.primitiveGateway({"m2m:rqp": requestPrimitiveData})
+            //     aggregatedResponse["m2m:agr"][i] = member_response;
+            // }
+            return {rsc: rsc.OK, pc: aggregatedResponse}
+        } catch (e) {
+            return rsc.INTERNAL_SERVER_ERROR;
         }
     }
 }

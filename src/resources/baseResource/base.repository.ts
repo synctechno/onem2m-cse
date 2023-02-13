@@ -4,7 +4,7 @@ import {Resource} from "./base.entity.js";
 import {nanoid} from "nanoid";
 import dataSource from '../../database.js'
 
-export class BaseRepository<T extends Resource & {ty: number}> {
+export class BaseRepository<T extends Resource> {
     readonly entityManager: EntityManager;
     readonly entityType: {new(): T};
 
@@ -19,7 +19,6 @@ export class BaseRepository<T extends Resource & {ty: number}> {
                 resource.ri = nanoid(8);
             }
             const data = await this.entityManager.save(this.entityType, resource);
-            const temp_obj = new this.entityType();
             await this.entityManager.save(Lookup, {
                 ri: resource.ri,
                 pi: targetResource.ri,

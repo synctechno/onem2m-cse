@@ -8,9 +8,9 @@ export enum resourceTypeEnum {
     container = 3,
     contentInstance = 4,
     CSEBase = 5,
-    delivery = 6,
-    eventConfig = 7,
-    execInstance = 8,
+    // delivery = 6,
+    // eventConfig = 7,
+    // execInstance = 8,
     group = 9,
     locationPolicy = 10,
     subscription = 23,
@@ -211,10 +211,31 @@ export enum rscEnum {
     EXTERNAL_OBJECT_NOT_REACHABLE_BEFORE_OET_TIMEOUT = 6031,
 }
 
+//used for internal purposes
 export type resultData = {
     pc?: any,
     rsc: rscEnum
 } | rscEnum
 
+//TS-0004 Table 6.3.4.2.7 1
+export enum resultContent {
+    nothing = 0,
+    attributes = 1,
+    hierarchial_address = 2,
+    hierarchial_address_and_attributes = 3,
+    attributes_and_child_resources = 4,
+    attributes_and_child_resource_references = 5,
+    child_resource_references = 6,
+    original_resource = 7,
+    child_resources = 8,
+    modified_attributes = 9,
+    semantic_content = 10
+}
+
+export enum consistencyStrategy {
+    ABANDON_MEMBER = 1,
+    ABANDON_GROUP = 2,
+    SET_MIXED = 3
+}
 
 type atLeastOne<T, U = { [K in keyof T]: Pick<T, K> }> = Partial<T> & U[keyof U]
