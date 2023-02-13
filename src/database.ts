@@ -10,6 +10,7 @@ import {Container} from "./resources/container/container.entity.js";
 import {ContentInstance} from "./resources/contentInstance/contentInstance.entity.js";
 import {LocationPolicy} from "./resources/locationPolicy/locationPolicy.entity.js";
 import {Group} from "./resources/group/group.entity.js";
+import {Node} from "./resources/node/node.entity.js";
 
 const CseDataSource = new DataSource({
     type: "postgres",
@@ -29,6 +30,7 @@ const CseDataSource = new DataSource({
         ContentInstance,
         LocationPolicy,
         Group,
+        Node
     ],
     synchronize: true
 })

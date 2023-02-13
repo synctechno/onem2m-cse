@@ -13,6 +13,7 @@ export enum resourceTypeEnum {
     // execInstance = 8,
     group = 9,
     locationPolicy = 10,
+    node = 14,
     subscription = 23,
     flexContainer = 28
 }

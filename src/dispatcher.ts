@@ -14,6 +14,7 @@ import {ContainerManager} from "./resources/container/container.manager.js";
 import {ContentInstanceManager} from "./resources/contentInstance/contentInstance.manager.js";
 import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.manager.js";
 import {GroupManager} from "./resources/group/group.manager.js";
+import {NodeManager} from "./resources/node/node.manager.js";
 
 export class Dispatcher {
     private lookupRepository: LookupRepository;
@@ -26,6 +27,7 @@ export class Dispatcher {
     private contentInstanceManager: ContentInstanceManager;
     private locationPolicyManager: LocationPolicyManager;
     private groupManager: GroupManager;
+    private nodeManager: NodeManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -38,6 +40,7 @@ export class Dispatcher {
         this.contentInstanceManager = new ContentInstanceManager();
         this.locationPolicyManager = new LocationPolicyManager();
         this.groupManager = new GroupManager();
+        this.nodeManager = new NodeManager();
     }
 
     async primitiveGateway(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
@@ -210,6 +213,10 @@ export class Dispatcher {
                 result = await this.groupManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
+            case ty.node: {
+                result = await this.nodeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                break;
+            }
             default:
                 return rsc.NOT_IMPLEMENTED;
         }
@@ -344,6 +351,9 @@ export class Dispatcher {
             }
             case resourceTypeEnum.group: {
                 return this.groupManager.getResource(ri);
+            }
+            case resourceTypeEnum.node: {
+                return this.nodeManager.getResource(ri);
             }
         }
     }
