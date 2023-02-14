@@ -8,7 +8,7 @@ import {AccessControlPolicyManager} from "../accessControlPolicy/accessControlPo
 const SRV: supportedReleaseVersions = ["3"];
 const POA = ["http://127.0.0.1:3000"];
 const CSE_RESOURCE_ID = "KLFHnzxa";
-const SRT: ty[] = [ty.AE, ty.container, ty.contentInstance, ty.CSEBase, ty.group, ty.locationPolicy, ty.subscription, ty.flexContainer]
+const SRT: ty[] = [ty.AE, ty.container, ty.contentInstance, ty.CSEBase, ty.group, ty.locationPolicy, ty.node, ty.subscription, ty.flexContainer]
 
 export class CseBaseManager extends BaseManager<CseBase> {
     private readonly ri = CSE_RESOURCE_ID;
