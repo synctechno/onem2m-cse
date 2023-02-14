@@ -1,9 +1,9 @@
-import {RegularResource} from "../baseResource/base.entity.js";
+import {Resource} from "../baseResource/base.entity.js";
 import {accessControlRule, resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
 
 @Entity("accessControlPolicy")
-export class AccessControlPolicy extends RegularResource {
+export class AccessControlPolicy extends Resource {
     @Column({
         type: "enum",
         enum: resourceTypeEnum,

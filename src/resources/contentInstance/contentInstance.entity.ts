@@ -1,9 +1,9 @@
-import {RegularResource} from "../baseResource/base.entity.js";
+import {Resource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
 
 @Entity("contentInstance")
-export class ContentInstance extends RegularResource {
+export class ContentInstance extends Resource {
     @Column({
         type: "enum",
         enum: resourceTypeEnum,
