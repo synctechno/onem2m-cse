@@ -31,7 +31,7 @@ export class CseCore {
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
-        this.cseBaseManager = new CseBaseManager(cseConfig.cseName, cseConfig.cseId)
+        this.cseBaseManager = new CseBaseManager()
         this.aeManager = new AeManager();
         this.acpManager = new AccessControlPolicyManager();
         this.flexContainerManager = new FlexContainerManager();

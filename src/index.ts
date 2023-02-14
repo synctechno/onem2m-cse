@@ -1,6 +1,4 @@
 import Fastify, {FastifyInstance} from 'fastify';
-import {CseBaseManager} from "./resources/cseBase/cseBase.manager.js";
-import {cseConfig} from "./configs/cse.config.js";
 import {deleteRoute, getRoute, postRoute, putRoute} from "./bindings/http/routes.js";
 import {TypeBoxTypeProvider} from "@fastify/type-provider-typebox";
 

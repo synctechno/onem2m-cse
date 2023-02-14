@@ -2,7 +2,7 @@ import {resourceTypeEnum as ty, resultData, rscEnum as rsc, supportedReleaseVers
 import {BaseManager} from "../baseResource/base.manager.js";
 import {CseBase} from "./cseBase.entity.js";
 import {AeManager} from "../ae/ae.manager.js";
-import {defaulAeConfig, defaultAcpConfig} from "../../configs/cse.config.js";
+import {cseConfig, defaulAeConfig, defaultAcpConfig} from "../../configs/cse.config.js";
 import {AccessControlPolicyManager} from "../accessControlPolicy/accessControlPolicy.manager.js";
 
 const SRV: supportedReleaseVersions = ["3"];
@@ -22,10 +22,10 @@ export class CseBaseManager extends BaseManager<CseBase> {
     private readonly aeManager: AeManager;
     private readonly acpManager: AccessControlPolicyManager;
 
-    constructor(rn: string = "", csi: string = "") {
+    constructor() {
         super(CseBase);
-        this.rn = rn;
-        this.csi = csi;
+        this.rn = cseConfig.cseId;
+        this.csi = cseConfig.cseId;
 
         this.aeManager = new AeManager();
         this.acpManager = new AccessControlPolicyManager();
