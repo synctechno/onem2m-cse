@@ -22,8 +22,12 @@ export class CseBaseManager extends BaseManager<CseBase> {
         this.csi = csi;
 
         //wait 0.5s to establish database connection
-        setTimeout(() => {
-            this.init(this.ri, this.rn, this.csi, this.pi, this.srv, this.poa, this.srt)
+        setTimeout(async () => {
+            try {
+                await this.init(this.ri, this.rn, this.csi, this.pi, this.srv, this.poa, this.srt)
+            } catch (e){
+                console.log("Initialization error: ", e);
+            }
         }, 500);
     }
 
@@ -41,20 +45,10 @@ export class CseBaseManager extends BaseManager<CseBase> {
 
     init = async (ri: string, rn: string, csi: string, pi: string, srv: supportedReleaseVersions, poa: string[], srt: ty[]) => {
         await this.repository.create({
-                ri,
-                rn,
-                csi,
-                pi,
-                srv,
-                poa,
-                srt,
-                ty: ty.CSEBase,
+                ri, rn, csi, pi, srv, poa, srt, ty: ty.CSEBase,
             },
             {
-                ri: "",
-                pi: "",
-                structured: "",
-                ty: ty.CSEBase
+                ri: "", pi: "", structured: "", ty: ty.CSEBase
             }
         );
     }
