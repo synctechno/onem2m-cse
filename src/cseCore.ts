@@ -16,7 +16,7 @@ import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.m
 import {GroupManager} from "./resources/group/group.manager.js";
 import {NodeManager} from "./resources/node/node.manager.js";
 
-export class Dispatcher {
+export class CseCore {
     private lookupRepository: LookupRepository;
     private cseBaseManager: CseBaseManager;
     private aeManager: AeManager;
@@ -299,21 +299,28 @@ export class Dispatcher {
                         if (!result) {
                             return rsc.NOT_FOUND
                         }
-                        const baseResource = await this.getResource(result.ri, result.ty);
-
-                        const childResourcesLookup: Lookup[] =  await this.lookupRepository.findBy({pi: resourceId});
-                        for (const child of childResourcesLookup){
-                            if(!baseResource.hasOwnProperty(resourceTypeToPrefix.get(child.ty))){
-                                baseResource[resourceTypeToPrefix.get(child.ty)!] = []
-                            }
-                            baseResource[resourceTypeToPrefix.get(child.ty)!].push(
-                                await this.getResource(child.ri, child.ty)
-                            )
+                        // let baseResource = await this.getResource(result.ri, result.ty);
+                        //
+                        // const childResourcesLookup: Lookup[] =  await this.lookupRepository.findBy({pi: resourceId});
+                        // for (const child of childResourcesLookup){
+                        //     if(!baseResource.hasOwnProperty(resourceTypeToPrefix.get(child.ty))){
+                        //         baseResource[resourceTypeToPrefix.get(child.ty)!] = []
+                        //     }
+                        //     baseResource[resourceTypeToPrefix.get(child.ty)!].push(
+                        //         await this.getResource(child.ri, child.ty)
+                        //     )
+                        // }
+                        // const baseResourcePrefix: string = resourceTypeToPrefix.get(baseResource.ty)!;
+                        // return {
+                        //     [baseResourcePrefix]: baseResource
+                        // }
+                        const childResourcesLookup: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
+                        const discoveryResult: any = [];
+                        for (const child of childResourcesLookup) {
+                            const childResource = await this.getResource(child.ri, child.ty);
+                            discoveryResult.push({[resourceTypeToPrefix.get(child.ty)!]: childResource})
                         }
-                        const baseResourcePrefix: string = resourceTypeToPrefix.get(baseResource.ty)!;
-                        return {
-                            [baseResourcePrefix]: baseResource
-                        }
+                        return discoveryResult;
                     }
                     default: {
                         return null;
