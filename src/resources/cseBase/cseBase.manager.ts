@@ -24,7 +24,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
 
     constructor() {
         super(CseBase);
-        this.rn = cseConfig.cseId;
+        this.rn = cseConfig.cseName;
         this.csi = cseConfig.cseId;
 
         this.aeManager = new AeManager();
