@@ -8,7 +8,7 @@ export class AeManager extends BaseManager<AE>{
         super(AE);
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    public async create(pc, targetResource, options?): Promise<resultData> {
         if (options?.fr.charAt(0) !== 'C' && options?.fr.charAt(0) !== 'S'){ //TODO clarify the usage of 'C' and 'S'
             return rscEnum.BAD_REQUEST;
         }
@@ -26,7 +26,6 @@ export class AeManager extends BaseManager<AE>{
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
         resource.ri = resourceId;
-        resource.aei = options?.fr;
 
         const data = await this.repository.create(resource, targetResource);
         if (data === false) {

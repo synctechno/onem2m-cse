@@ -1,6 +1,9 @@
 import {resourceTypeEnum as ty, resultData, rscEnum as rsc, supportedReleaseVersions} from "../../types/types.js";
 import {BaseManager} from "../baseResource/base.manager.js";
 import {CseBase} from "./cseBase.entity.js";
+import {AeManager} from "../ae/ae.manager.js";
+import {defaulAeConfig, defaultAcpConfig} from "../../configs/cse.config.js";
+import {AccessControlPolicyManager} from "../accessControlPolicy/accessControlPolicy.manager.js";
 
 const SRV: supportedReleaseVersions = ["3"];
 const POA = ["http://127.0.0.1:3000"];
@@ -16,19 +19,22 @@ export class CseBaseManager extends BaseManager<CseBase> {
     private readonly poa = POA;
     private readonly srt = SRT;
 
+    private readonly aeManager: AeManager;
+    private readonly acpManager: AccessControlPolicyManager;
+
     constructor(rn: string = "", csi: string = "") {
         super(CseBase);
         this.rn = rn;
         this.csi = csi;
 
-        //wait 0.5s to establish database connection
-        setTimeout(async () => {
-            try {
-                await this.init(this.ri, this.rn, this.csi, this.pi, this.srv, this.poa, this.srt)
-            } catch (e){
-                console.log("Initialization error: ", e);
-            }
-        }, 500);
+        this.aeManager = new AeManager();
+        this.acpManager = new AccessControlPolicyManager();
+
+        try {
+            this.init(this.ri, this.rn, this.csi, this.pi, this.srv, this.poa, this.srt)
+        } catch (e) {
+            console.log("Initialization error: ", e);
+        }
     }
 
     protected async create(pc, targetResource, options?): Promise<resultData> {
@@ -51,5 +57,30 @@ export class CseBaseManager extends BaseManager<CseBase> {
                 ri: "", pi: "", structured: "", ty: ty.CSEBase
             }
         );
+
+        await this.aeManager.create(
+            {
+                'm2m:ae': {
+                    rn: defaulAeConfig.rn,
+                    pi: ri,
+                    ty: ty.AE,
+                    aei: defaulAeConfig.aei,
+                    rr: true
+                }
+            },
+            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase},
+            {fr: defaulAeConfig.ri})
+        await this.acpManager.create(
+            {
+                'm2m:acp': {
+                    ri: defaultAcpConfig.ri,
+                    rn: defaultAcpConfig.rn,
+                    pi: ri,
+                    ty: ty.accessControlPolicy,
+                    pv: defaultAcpConfig.pv,
+                    pvs: defaultAcpConfig.pv
+                }
+            },
+            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase})
     }
 }

@@ -13,8 +13,6 @@ const start = async (): Promise<void>  => {
         await server.register(putRoute);
         await server.register(deleteRoute);
         await server.listen({ port: 3000 });
-
-        new CseBaseManager(cseConfig.cseName, cseConfig.cseId);
     } catch (err) {
         server.log.error(err)
         process.exit(1)

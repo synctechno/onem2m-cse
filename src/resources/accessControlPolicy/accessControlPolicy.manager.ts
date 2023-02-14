@@ -1,10 +1,15 @@
 import {operationEnum} from "../../types/primitives.js";
 import {AccessControlPolicy} from "./accessControlPolicy.entity.js";
 import {BaseManager} from "../baseResource/base.manager.js";
+import {resultData} from "../../types/types.js";
 
 export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>{
     constructor() {
         super(AccessControlPolicy);
+    }
+
+    public async create(pc, targetResource, options?): Promise<resultData> {
+        return super.create(pc, targetResource, options);
     }
 
     async checkPrivileges(originator, acpi, isAcpResource = false) {
