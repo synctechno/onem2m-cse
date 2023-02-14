@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm"
+import {DataSource} from "typeorm"
 import {databaseConfig} from "./configs/database.config.js";
 import {CseBase} from "./resources/cseBase/cseBase.entity.js";
 import {AE} from "./resources/ae/ae.entity.js";
@@ -35,14 +35,14 @@ const CseDataSource = new DataSource({
     synchronize: true
 })
 
-CseDataSource.initialize()
-    .then(() => {
-        console.log("Data Source has been initialized!")
-        return CseDataSource;
-    })
-    .catch((err) => {
-        console.error("Error during Data Source initialization", err)
-        return CseDataSource;
-    })
+let dataSource: DataSource;
+try {
+    // @ts-ignore
+    dataSource = await CseDataSource.initialize()
+    console.log("Data Source has been initialized!")
+} catch (e) {
+    console.log(e);
+    dataSource = CseDataSource;
+}
 
-export default CseDataSource;
+export default dataSource;
