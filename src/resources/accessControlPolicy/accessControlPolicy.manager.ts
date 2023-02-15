@@ -28,17 +28,20 @@ export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>
                 [operationEnum.DISCOVERY, false],
             ])
         }
-        for (let i=0; i<acp[privAttr].length; i++){
-            if (acp[privAttr][i].acor === originator){
-                operationsBinary = dec2bin(acp.pv[i].acop);
-                return new Map([
-                    [operationEnum.CREATE, operationsBinary.charAt(5) === "1"],
-                    [operationEnum.RETRIEVE, operationsBinary.charAt(4) === "1"],
-                    [operationEnum.UPDATE, operationsBinary.charAt(3) === "1"],
-                    [operationEnum.DELETE, operationsBinary.charAt(2) === "1"],
-                    [operationEnum.NOTIFY, operationsBinary.charAt(1) === "1"],
-                    [operationEnum.DISCOVERY, operationsBinary.charAt(0) === "1"],
-                ])
+        for (let i=0; i<acp[privAttr].acr.length; i++){
+            for (let acor of acp[privAttr].acr[i].acor){
+                if (acor === originator){
+                    operationsBinary = dec2bin(acp[privAttr].acr[i].acop);
+                    const opLength = operationsBinary.length;
+                    return new Map([
+                        [operationEnum.CREATE, operationsBinary.charAt(opLength - 1) === "1"],
+                        [operationEnum.RETRIEVE, operationsBinary.charAt(opLength - 2) === "1"],
+                        [operationEnum.UPDATE, operationsBinary.charAt(opLength - 3) === "1"],
+                        [operationEnum.DELETE, operationsBinary.charAt(opLength - 4) === "1"],
+                        [operationEnum.NOTIFY, operationsBinary.charAt(opLength - 5) === "1"],
+                        [operationEnum.DISCOVERY, operationsBinary.charAt(opLength - 6) === "1"],
+                    ])
+                }
             }
         }
         //if the originator is not found, then no permission for all operations

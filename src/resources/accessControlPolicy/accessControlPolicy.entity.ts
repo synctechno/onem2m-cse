@@ -1,5 +1,5 @@
 import {Resource} from "../baseResource/base.entity.js";
-import {accessControlRule, resourceTypeEnum} from "../../types/types.js"
+import {resourceTypeEnum, setOfACRs} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
 
 @Entity("accessControlPolicy")
@@ -13,11 +13,13 @@ export class AccessControlPolicy extends Resource {
 
     @Column({
         type: "json",
-        nullable: true})
-    pv: accessControlRule[]
+        nullable: true
+    })
+    pv: setOfACRs
 
     @Column({
         type: "json",
-        nullable: true})
-    pvs: accessControlRule[]
+        nullable: true
+    })
+    pvs: setOfACRs
 }

@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import Fastify, {FastifyInstance} from 'fastify';
 import {deleteRoute, getRoute, postRoute, putRoute} from "./bindings/http/routes.js";
 import {TypeBoxTypeProvider} from "@fastify/type-provider-typebox";

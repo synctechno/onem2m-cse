@@ -1,8 +1,9 @@
 import {DeleteResult, EntityManager, UpdateResult} from "typeorm";
 import {Lookup} from "../lookup/lookup.entity.js";
-import {Resource} from "./base.entity.js";
+import {RegularResource, Resource} from "./base.entity.js";
 import {nanoid} from "nanoid";
 import dataSource from '../../database.js'
+import {plainToInstance} from "class-transformer";
 
 export class BaseRepository<T extends Resource> {
     readonly entityManager: EntityManager;
@@ -13,18 +14,20 @@ export class BaseRepository<T extends Resource> {
         this.entityType = entityType;
     }
 
-    async create(resource: T, targetResource: Lookup) {
+    async create(plainResource: T, parentLookup: Lookup) {
         try {
+            const resource: T = plainToInstance(this.entityType, plainResource)
             if (!resource.ri){
                 resource.ri = nanoid(8);
             }
             const data = await this.entityManager.save(this.entityType, resource);
             await this.entityManager.save(Lookup, {
                 ri: resource.ri,
-                pi: targetResource.ri,
-                structured: targetResource.structured ?
-                    targetResource.structured + '/' + resource.rn : resource.rn,
-                ty: new this.entityType().ty
+                pi: parentLookup.ri,
+                structured: parentLookup.structured ?
+                    parentLookup.structured + '/' + resource.rn : resource.rn,
+                ty: new this.entityType().ty,
+                acpi: resource instanceof RegularResource ? resource.acpi : parentLookup.acpi,
             } as Lookup);
             return data;
         } catch (e) {

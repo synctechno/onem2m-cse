@@ -14,4 +14,8 @@ export class Lookup {
         enum: resourceTypeEnum
         })
     readonly ty: resourceTypeEnum;
+    @Column({nullable: true})
+    readonly acpi?: string
+    @Column({nullable: true})
+    readonly originator?: string
 }
