@@ -13,19 +13,19 @@ export class AeManager extends BaseManager<AE>{
             return rscEnum.BAD_REQUEST;
         }
 
-        if (!['N', 'R'].includes(pc[this.prefix].aei.charAt(0))){ //TODO clarify the usage of 'N', 'R', and 'r'?
+        if (!['N', 'R'].includes(pc[this.prefix].api.charAt(0))){ //TODO clarify the usage of 'N', 'R', and 'r'?
             return rscEnum.BAD_REQUEST;
         }
-        let resourceId = "";
+        let aei = "";
         if (options?.fr === 'S'){
-            resourceId = 'S' + nanoid(8)
+            aei = 'S' + nanoid(8)
         } else if (options?.fr.charAt(0) === 'C'){
-            resourceId = options?.fr;
+            aei = options?.fr;
         }
 
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
-        resource.ri = resourceId;
+        resource.aei = aei;
 
         const data = await this.repository.create(resource, targetResource);
         if (data === false) {

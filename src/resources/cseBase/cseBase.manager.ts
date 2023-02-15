@@ -64,7 +64,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                     rn: defaulAeConfig.rn,
                     pi: ri,
                     ty: ty.AE,
-                    aei: defaulAeConfig.aei,
+                    api: defaulAeConfig.api,
                     rr: true
                 }
             },
