@@ -43,11 +43,16 @@ export type supportedReleaseVersions = supportedReleaseVersion[]
 //TODO
 export type e2eSecInfo = any;
 
+//TS-0004 Table 6.3.5.26 1:
+export type setOfACRs = {
+    acr: accessControlRule[]
+}
+
 //TS-0001 Table 9.6.2.0-3
 export type accessControlRule = {
-    acor?: accessControlContexts,
-    acop?: Number,
-    acco?: string,
+    acor: string[],
+    acop: Number,
+    acco?: accessControlContexts[],
 }
 
 export type accessControlContexts = {

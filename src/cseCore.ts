@@ -299,6 +299,22 @@ export class CseCore {
                         if (!result) {
                             return rsc.NOT_FOUND
                         }
+
+                        let baseResource: any = {};
+
+                        const childResourcesLookup: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
+                        for (const child of childResourcesLookup) {
+                            const childResource = await this.getResource(child.ri, child.ty)
+                            if (!baseResource.hasOwnProperty(resourceTypeToPrefix.get(child.ty))) {
+                                baseResource[resourceTypeToPrefix.get(child.ty)!] = []
+                            }
+                            baseResource[resourceTypeToPrefix.get(child.ty)!].push(childResource)
+                        }
+                        return {
+                            ['m2m:rsp']: baseResource
+                        }
+
+                        //CORRECT ONE
                         // let baseResource = await this.getResource(result.ri, result.ty);
                         //
                         // const childResourcesLookup: Lookup[] =  await this.lookupRepository.findBy({pi: resourceId});
@@ -314,13 +330,6 @@ export class CseCore {
                         // return {
                         //     [baseResourcePrefix]: baseResource
                         // }
-                        const childResourcesLookup: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
-                        const discoveryResult: any = [];
-                        for (const child of childResourcesLookup) {
-                            const childResource = await this.getResource(child.ri, child.ty);
-                            discoveryResult.push({[resourceTypeToPrefix.get(child.ty)!]: childResource})
-                        }
-                        return discoveryResult;
                     }
                     default: {
                         return null;
@@ -428,7 +437,7 @@ export class CseCore {
         }
         let aggregatedResponse: { "m2m:agr": responsePrimitive[] } = {"m2m:agr": []};
         //for each member, make a new primitive request (recursively for fopt members)
-        const childFopt = requestPrimitiveData.to.split('/fopt') ;
+        const childFopt = requestPrimitiveData.to.split('/fopt');
         try {
             for (const memberResource of group.mid) {
                 requestPrimitiveData.to = memberResource + childFopt[1];
