@@ -15,7 +15,7 @@ export class ContentInstanceManager extends BaseManager<ContentInstance>{
     }
 
     protected async create(pc, targetResource, options?): Promise<resultData> {
-        const resource: any = pc["m2m:cin"];
+        const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
         resource.rn = 'cin_' + nanoid(8)
         resource.ri = nanoid(8);
@@ -33,7 +33,7 @@ export class ContentInstanceManager extends BaseManager<ContentInstance>{
 
         return {
             rsc: rsc.CREATED,
-            pc: {"m2m:cin": data}
+            pc: {[this.prefix]: data}
         }
     }
 
@@ -48,7 +48,7 @@ export class ContentInstanceManager extends BaseManager<ContentInstance>{
         }
         return {
             rsc: rsc.OK,
-            pc: {"m2m:cin": resource}
+            pc: {[this.prefix]: resource}
         }
     }
 
