@@ -2,6 +2,7 @@ import {operationEnum} from "../../types/primitives.js";
 import {AccessControlPolicy} from "./accessControlPolicy.entity.js";
 import {BaseManager} from "../baseResource/base.manager.js";
 import {resultData} from "../../types/types.js";
+import {defaulAeConfig} from "../../configs/cse.config.js";
 
 export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>{
     constructor() {
@@ -13,6 +14,18 @@ export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>
     }
 
     async checkPrivileges(originator, acpi, isAcpResource = false) {
+        //if origin = Admin AE, grant full access
+        if (originator === defaulAeConfig.aei){
+            return new Map([
+                [operationEnum.CREATE, true],
+                [operationEnum.RETRIEVE, true],
+                [operationEnum.UPDATE, true],
+                [operationEnum.DELETE, true],
+                [operationEnum.NOTIFY, true],
+                [operationEnum.DISCOVERY, true],
+            ])
+        }
+
         let operationsBinary = "";
 
         const privAttr = isAcpResource ? "pvs" : "pv"

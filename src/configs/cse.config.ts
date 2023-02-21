@@ -7,7 +7,8 @@ export const cseConfig = {
 export const defaulAeConfig = {
     ri: 'CAdmin',
     rn: 'admin-AE',
-    api: 'NAE-id'
+    api: 'NAE-id',
+    aei: 'CAdmin'
 }
 
 export const defaultAcpConfig = {
