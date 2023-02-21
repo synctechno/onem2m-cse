@@ -1,6 +1,7 @@
 import {RegularResource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
+import {IsString} from "class-validator";
 
 @Entity("flexContainer")
 export class FlexContainer extends RegularResource {
@@ -9,8 +10,9 @@ export class FlexContainer extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.flexContainer
     })
-    ty = resourceTypeEnum.flexContainer;
+    ty? = resourceTypeEnum.flexContainer;
 
+    @IsString({groups: ['create']})
     @Column({nullable: true})
     cnd: string
 

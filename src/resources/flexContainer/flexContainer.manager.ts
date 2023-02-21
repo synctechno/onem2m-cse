@@ -5,6 +5,10 @@ import {TypeCompiler} from '@sinclair/typebox/compiler'
 import {containerDefinitions, sdtSchemaCreate, sdtSchemaUpdate} from "../../types/sdt.js";
 import {BaseManager} from "../baseResource/base.manager.js";
 import {FlexContainer} from "./flexContainer.entity.js";
+import {operationEnum} from "../../types/primitives.js";
+import {plainToInstance} from "class-transformer";
+import {validate} from "class-validator";
+
 
 const sdtCreateValidator = TypeCompiler.Compile(sdtSchemaCreate);
 const sdtUpdateValidator = TypeCompiler.Compile(sdtSchemaUpdate);
@@ -109,5 +113,37 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
         }
         const {ca: caFromDb, ...rest} = data;
         return {...rest, ...caFromDb}
+    }
+
+    async validate(resource, op: operationEnum){
+        if (!resource.hasOwnProperty(this.prefix)){
+            return rsc.BAD_REQUEST;
+        }
+        let opString;
+        switch (op){
+            case operationEnum.CREATE:{
+                opString = 'create';
+                break;
+            }
+            case operationEnum.UPDATE:{
+                opString = 'update';
+                break;
+            }
+            default: {
+                return rsc.BAD_REQUEST;
+            }
+        }
+        try {
+            const obj = plainToInstance<FlexContainer, Object>(FlexContainer, resource[this.prefix] as Object, { });
+            Object.keys(obj).forEach(key => obj[key] === undefined ? delete obj[key] : {});
+            if (obj.ty){
+                delete obj.ty;
+            }
+            const validateResult = await validate(obj)
+            return validateResult.length === 0;
+        } catch (e){
+            console.log(e);
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
     }
 }

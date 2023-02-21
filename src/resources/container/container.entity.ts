@@ -1,4 +1,4 @@
-import {RegularResource, Resource} from "../baseResource/base.entity.js";
+import {RegularResource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js";
 import {Column, Entity} from "typeorm";
 
@@ -9,7 +9,7 @@ export class Container extends RegularResource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.container,
     })
-    ty = resourceTypeEnum.container;
+    ty? = resourceTypeEnum.container;
 
     @Column({default: 0})
     cni: number

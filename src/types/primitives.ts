@@ -1,5 +1,4 @@
-import {Type} from "@sinclair/typebox";
-import {filterCriteria, resourceType, resourceTypeEnum} from "./types.js";
+import {filterCriteria, resourceTypeEnum} from "./types.js";
 
 export enum operationEnum{
     CREATE = 1,

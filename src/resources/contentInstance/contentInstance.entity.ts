@@ -1,6 +1,7 @@
 import {Resource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
+import {Allow} from "class-validator";
 
 @Entity("contentInstance")
 export class ContentInstance extends Resource {
@@ -9,10 +10,11 @@ export class ContentInstance extends Resource {
         enum: resourceTypeEnum,
         default: resourceTypeEnum.contentInstance
     })
-    ty = resourceTypeEnum.contentInstance;
+    ty? = resourceTypeEnum.contentInstance;
 
-    @Column()
-    con: string
+    @Allow({groups: ['create']})
+    @Column("varchar")
+    con: any
 
     @Column({default: 0})
     cs: number

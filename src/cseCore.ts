@@ -66,6 +66,15 @@ export class CseCore {
 
 
     async process(requestPrimitiveData: requestPrimitiveData): Promise<resultData> {
+        if (requestPrimitiveData.op === operationEnum.CREATE || requestPrimitiveData.op === operationEnum.UPDATE){
+            const validateResult = await this.validate(requestPrimitiveData.pc, requestPrimitiveData.ty, requestPrimitiveData.op);
+            if (typeof validateResult === 'number'){
+                return validateResult;
+            }
+            if (!validateResult){
+                return rsc.BAD_REQUEST;
+            }
+        }
         //if fr is empty, response BAD_REQUEST (except for CREATE AE operation)
         if (!requestPrimitiveData.fr && !(requestPrimitiveData.op === operationEnum.CREATE && requestPrimitiveData.ty === ty.AE)) {
             return rsc.BAD_REQUEST;
@@ -276,7 +285,7 @@ export class CseCore {
             case 1: { //discovery
                 const result: Lookup[] = await this.lookupRepository.findBy({pi: resourceId});
                 switch (Number(fc?.rcn)) {
-                    case 8: {
+                    case 6: {
                         let pc: Object = {
                             "m2m:rrl": {
                                 "m2m:rrf": []
@@ -453,6 +462,41 @@ export class CseCore {
             return {rsc: rsc.OK, pc: aggregatedResponse}
         } catch (e) {
             return rsc.INTERNAL_SERVER_ERROR;
+        }
+    }
+
+    validate(resource, ty: resourceTypeEnum, op: operationEnum){
+        switch (ty){
+            case resourceTypeEnum.AE:{
+                return this.aeManager.validate(resource, op);
+            }
+            case resourceTypeEnum.accessControlPolicy: {
+                return this.acpManager.validate(resource, op);
+            }
+            case resourceTypeEnum.container: {
+                return this.containerManager.validate(resource, op);
+            }
+            case resourceTypeEnum.contentInstance: {
+                return this.contentInstanceManager.validate(resource, op);
+            }
+            case resourceTypeEnum.flexContainer: {
+                return this.flexContainerManager.validate(resource, op);
+            }
+            case resourceTypeEnum.subscription: {
+                return this.subscriptionManager.validate(resource, op);
+            }
+            case resourceTypeEnum.locationPolicy: {
+                return this.locationPolicyManager.validate(resource, op);
+            }
+            case resourceTypeEnum.group: {
+                return this.groupManager.validate(resource, op);
+            }
+            case resourceTypeEnum.node: {
+                return this.nodeManager.validate(resource, op);
+            }
+            default: {
+                return rsc.BAD_REQUEST;
+            }
         }
     }
 }

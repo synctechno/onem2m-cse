@@ -3,6 +3,8 @@ import {operationEnum} from "../../types/primitives.js";
 import {BaseRepository} from "./base.repository.js";
 import {Resource} from "./base.entity.js";
 import {resourceTypeToPrefix} from "../../utils.js";
+import {plainToInstance} from "class-transformer";
+import {validate} from "class-validator";
 
 export abstract class BaseManager<T extends Resource> {
     protected readonly repository: BaseRepository<T>;
@@ -86,5 +88,37 @@ export abstract class BaseManager<T extends Resource> {
 
     getResource(ri) {
         return this.repository.findOneBy(ri);
+    }
+
+    async validate(resource, op: operationEnum){
+        if (!resource.hasOwnProperty(this.prefix)){
+            return rsc.BAD_REQUEST;
+        }
+        let opString;
+        switch (op){
+            case operationEnum.CREATE:{
+                opString = 'create';
+                break;
+            }
+            case operationEnum.UPDATE:{
+                opString = 'update';
+                break;
+            }
+            default: {
+                return rsc.BAD_REQUEST;
+            }
+        }
+        try {
+            const obj = plainToInstance<T, Object>(this.entityType, resource[this.prefix] as Object, { });
+            Object.keys(obj).forEach(key => obj[key] === undefined ? delete obj[key] : {});
+            if (obj.ty){
+                delete obj.ty;
+            }
+            const validateResult = await validate(obj, {groups: [opString], whitelist: true, forbidNonWhitelisted: true })
+            return validateResult.length === 0;
+        } catch (e){
+            console.log(e);
+            return rsc.INTERNAL_SERVER_ERROR;
+        }
     }
 }
