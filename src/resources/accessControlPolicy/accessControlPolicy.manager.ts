@@ -31,7 +31,8 @@ export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>
         const privAttr = isAcpResource ? "pvs" : "pv"
 
         const acp = await this.repository.findOneBy(acpi);
-        if (acp === null || acp === false){
+        //if the originator is not found, then no permission for all operations
+        if (!acp){
             return new Map([
                 [operationEnum.CREATE, false],
                 [operationEnum.RETRIEVE, false],
@@ -57,7 +58,7 @@ export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>
                 }
             }
         }
-        //if the originator is not found, then no permission for all operations
+        //should not reach here
         return new Map([
             [operationEnum.CREATE, false],
             [operationEnum.RETRIEVE, false],
