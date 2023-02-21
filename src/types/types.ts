@@ -15,7 +15,9 @@ export enum resourceTypeEnum {
     locationPolicy = 10,
     node = 14,
     subscription = 23,
-    flexContainer = 28
+    flexContainer = 28,
+    timeSeries = 29,
+    timeSeriesInstance = 30
 }
 
 export const resourceType = Type.Enum(resourceTypeEnum)

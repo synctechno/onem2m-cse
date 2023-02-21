@@ -30,7 +30,9 @@ export const resourceTypeToPrefix: prefixMapType = new Map([
     [ty.flexContainer, "m2m:fcnt"],
     [ty.locationPolicy, "m2m:lcp"],
     [ty.group, "m2m:grp"],
-    [ty.node, "m2m:nod"]
+    [ty.node, "m2m:nod"],
+    [ty.timeSeries, "m2m:ts"],
+    [ty.timeSeriesInstance, "m2m:tsi"]
 
     // [ty.delivery, "m2m:x"],
     // [ty.eventConfig, "m2m:x"],
@@ -110,14 +112,17 @@ export function handleTo(to: string, cseName: string): {
 
 export const allowedChildResources = new Map([
     [ty.mixed, []],
-    [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.group]],
-    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.subscription, ty.locationPolicy, ty.group, ty.node]],
+    [ty.AE, [ty.subscription, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.group, ty.timeSeriesInstance]],
+    [ty.CSEBase, [ty.AE, ty.container, ty.flexContainer, ty.accessControlPolicy, ty.subscription, ty.locationPolicy,
+        ty.group, ty.node, ty.timeSeries]],
     [ty.accessControlPolicy, [ty.subscription]],
-    [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container]],
+    [ty.flexContainer, [ty.subscription, ty.flexContainer, ty.container, ty.timeSeries]],
     [ty.subscription, []],
-    [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription]],
+    [ty.container, [ty.container, ty.flexContainer, ty.contentInstance, ty.subscription, ty.timeSeries]],
     [ty.contentInstance, []],
     [ty.locationPolicy, [ty.subscription]],
     [ty.group, [ty.subscription]],
-    [ty.node, [ty.subscription]]
+    [ty.node, [ty.subscription]],
+    [ty.timeSeries, [ty.timeSeriesInstance, ty.subscription]],
+    [ty.timeSeriesInstance, []]
 ]);

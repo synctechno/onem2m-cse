@@ -15,6 +15,8 @@ import {ContentInstanceManager} from "./resources/contentInstance/contentInstanc
 import {LocationPolicyManager} from "./resources/locationPolicy/locationPolicy.manager.js";
 import {GroupManager} from "./resources/group/group.manager.js";
 import {NodeManager} from "./resources/node/node.manager.js";
+import {TimeSeriesManager} from "./resources/timeSeries/timeSeries.manager.js";
+import {TimeSeriesInstanceManager} from "./resources/timeSeriesInstance/timeSeriesInstance.manager.js";
 
 export class CseCore {
     private lookupRepository: LookupRepository;
@@ -28,6 +30,8 @@ export class CseCore {
     private locationPolicyManager: LocationPolicyManager;
     private groupManager: GroupManager;
     private nodeManager: NodeManager;
+    private timeSeriesManager: TimeSeriesManager;
+    private timeSeriesInstanceManager: TimeSeriesInstanceManager;
 
     constructor() {
         this.lookupRepository = new LookupRepository(dataSource);
@@ -41,6 +45,8 @@ export class CseCore {
         this.locationPolicyManager = new LocationPolicyManager();
         this.groupManager = new GroupManager();
         this.nodeManager = new NodeManager();
+        this.timeSeriesManager = new TimeSeriesManager();
+        this.timeSeriesInstanceManager = new TimeSeriesInstanceManager();
     }
 
     async primitiveGateway(requestPrimitive: requestPrimitive): Promise<responsePrimitive> {
@@ -63,7 +69,6 @@ export class CseCore {
             }
         }
     }
-
 
     async process(requestPrimitiveData: requestPrimitiveData): Promise<resultData> {
         if (requestPrimitiveData.op === operationEnum.CREATE || requestPrimitiveData.op === operationEnum.UPDATE){
@@ -123,11 +128,11 @@ export class CseCore {
             if (!parentResource) {
                 return rsc.NOT_FOUND;
             }
-            if (parentResource.ty !== resourceTypeEnum.container) {
+            if (parentResource.ty !== resourceTypeEnum.container && parentResource.ty !== resourceTypeEnum.timeSeries) {
                 return rsc.NOT_FOUND;
             }
             targetResource = {
-                ty: resourceTypeEnum.contentInstance,
+                ty: parentResource.ty,
                 pi: parentResource.ri,
                 olla: oldestLatest
             }
@@ -224,6 +229,14 @@ export class CseCore {
             }
             case ty.node: {
                 result = await this.nodeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                break;
+            }
+            case ty.timeSeries: {
+                result = await this.timeSeriesManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                break;
+            }
+            case ty.timeSeriesInstance: {
+                result = await this.timeSeriesInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
                 break;
             }
             default:
@@ -380,6 +393,12 @@ export class CseCore {
             case resourceTypeEnum.node: {
                 return this.nodeManager.getResource(ri);
             }
+            case resourceTypeEnum.timeSeries: {
+                return this.timeSeriesManager.getResource(ri);
+            }
+            case resourceTypeEnum.timeSeriesInstance: {
+                return this.timeSeriesInstanceManager.getResource(ri);
+            }
         }
     }
 
@@ -493,6 +512,12 @@ export class CseCore {
             }
             case resourceTypeEnum.node: {
                 return this.nodeManager.validate(resource, op);
+            }
+            case resourceTypeEnum.timeSeries: {
+                return this.timeSeriesManager.validate(resource, op);
+            }
+            case resourceTypeEnum.timeSeriesInstance: {
+                return this.timeSeriesInstanceManager.validate(resource, op);
             }
             default: {
                 return rsc.BAD_REQUEST;
