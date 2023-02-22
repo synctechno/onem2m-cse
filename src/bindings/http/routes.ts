@@ -2,9 +2,7 @@ import {headerSchema} from "./schemas.js";
 import {resourceTypeEnum} from "../../types/types.js";
 import {httpToPrimitive, primitiveToHtpp} from "./converter.js";
 import {responsePrimitive} from "../../types/primitives.js";
-import {CseCore} from "../../cseCore.js";
-
-const cseCore = new CseCore(); //TODO need to find a better for initialization
+import {cseCore} from "../../index.js";
 
 export const router = (fastify, options, done) => {
     fastify.all(`/*`, {

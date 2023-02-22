@@ -2,8 +2,10 @@ import 'reflect-metadata';
 import Fastify, {FastifyInstance} from 'fastify';
 import {router} from "./bindings/http/routes.js";
 import {TypeBoxTypeProvider} from "@fastify/type-provider-typebox";
+import {CseCore} from "./cseCore.js";
 
 const server: FastifyInstance = Fastify({logger: true}).withTypeProvider<TypeBoxTypeProvider>()
+export const cseCore = new CseCore();
 
 const start = async (): Promise<void>  => {
     try {
