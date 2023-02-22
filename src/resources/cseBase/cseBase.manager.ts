@@ -4,12 +4,12 @@ import {CseBase} from "./cseBase.entity.js";
 import {AeManager} from "../ae/ae.manager.js";
 import {cseConfig, defaulAeConfig, defaultAcpConfig} from "../../configs/cse.config.js";
 import {AccessControlPolicyManager} from "../accessControlPolicy/accessControlPolicy.manager.js";
+import {getEnumValues} from "../../utils.js";
 
 const SRV: supportedReleaseVersions = ["3"];
 const POA = ["http://127.0.0.1:3000"];
 const CSE_RESOURCE_ID = "in-cse-id";
-const SRT: ty[] = [ty.AE, ty.container, ty.contentInstance, ty.CSEBase, ty.group, ty.locationPolicy, ty.node, ty.subscription, ty.flexContainer]
-
+const SRT: ty[] = getEnumValues(ty).slice(1) as ty[]; //slice(1) to remove mixed
 export class CseBaseManager extends BaseManager<CseBase> {
     private readonly ri = CSE_RESOURCE_ID;
     private readonly rn: string;
