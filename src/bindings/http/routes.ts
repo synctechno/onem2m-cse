@@ -4,73 +4,25 @@ import {httpToPrimitive, primitiveToHtpp} from "./converter.js";
 import {responsePrimitive} from "../../types/primitives.js";
 import {CseCore} from "../../cseCore.js";
 
+const cseCore = new CseCore(); //TODO need to find a better for initialization
 
-const cseCore = new CseCore();
-
-export const getRoute = (fastify, options, done) => {
-    fastify.get(`/*`, {
+export const router = (fastify, options, done) => {
+    fastify.all(`/*`, {
         schema: {
             headers: headerSchema
         }
     }, async (req, res) => {
-        const reqPrimitive = httpToPrimitive(req);
+        let ty: resourceTypeEnum | undefined = undefined;
+        if (req.method === 'POST' || req.method === 'PUT'){
+            ty = Number(req.headers['content-type'].split(';ty=')[1]);
+        }
+
+        const reqPrimitive = httpToPrimitive(req, ty);
 
         const resPrimitive: responsePrimitive = await cseCore.primitiveGateway(reqPrimitive);
-        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
+        const {headers, body, statusCode} = responsePrimitiveToHtpp(resPrimitive);
         res.headers = headers;
         res.code(statusCode).send(body);
     })
     done();
 };
-
-
-export const postRoute = (fastify, options, done) => {
-    fastify.post(`/*`, {
-        schema: {
-            headers: headerSchema
-        }
-    }, async (req, res) => {
-        const ty: resourceTypeEnum = Number(req.headers['content-type'].split(';ty=')[1]);
-        const reqPrimitive = httpToPrimitive(req, ty, );
-
-        const resPrimitive: responsePrimitive = await cseCore.primitiveGateway(reqPrimitive);
-        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
-        res.headers = headers;
-        res.code(statusCode).send(body);
-    })
-    done();
-};
-
-export const putRoute = (fastify, options, done) => {
-    fastify.put(`/*`, {
-        schema: {
-            headers: headerSchema
-        }
-    }, async (req, res) => {
-        const ty: resourceTypeEnum = Number(req.headers['content-type'].split(';ty=')[1]);
-        const reqPrimitive = httpToPrimitive(req, ty, );
-
-        const resPrimitive: responsePrimitive = await cseCore.primitiveGateway(reqPrimitive);
-        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
-        res.headers = headers;
-        res.code(statusCode).send(body);
-    })
-    done();
-};
-
-export const deleteRoute = (fastify, options, done) => {
-    fastify.delete(`/*`, {
-        schema: {
-            headers: headerSchema
-        }
-    }, async (req, res) => {
-        const reqPrimitive = httpToPrimitive(req, null );
-
-        const resPrimitive: responsePrimitive = await cseCore.primitiveGateway(reqPrimitive);
-        const {headers, body, statusCode} = primitiveToHtpp(resPrimitive);
-        res.headers = headers;
-        res.code(statusCode).send(body);
-    })
-    done();
-};
-
