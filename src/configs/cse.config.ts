@@ -5,14 +5,14 @@ export const cseConfig = {
 };
 
 export const defaulAeConfig = {
-    ri: 'CAdmin',
+    ri: 'admin-ae-id',
     rn: 'admin-AE',
     api: 'NAE-id',
     aei: 'CAdmin'
 }
 
 export const defaultAcpConfig = {
-    ri: 'adminacp-id',
+    ri: 'admin-acp-id',
     rn: 'admin-ACP',
     pv: {
         acr: [{

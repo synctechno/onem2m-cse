@@ -7,7 +7,7 @@ import {AccessControlPolicyManager} from "../accessControlPolicy/accessControlPo
 
 const SRV: supportedReleaseVersions = ["3"];
 const POA = ["http://127.0.0.1:3000"];
-const CSE_RESOURCE_ID = "KLFHnzxa";
+const CSE_RESOURCE_ID = "in-cse-id";
 const SRT: ty[] = [ty.AE, ty.container, ty.contentInstance, ty.CSEBase, ty.group, ty.locationPolicy, ty.node, ty.subscription, ty.flexContainer]
 
 export class CseBaseManager extends BaseManager<CseBase> {
@@ -61,6 +61,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
         await this.aeManager.create(
             {
                 'm2m:ae': {
+                    ri: defaulAeConfig.ri,
                     rn: defaulAeConfig.rn,
                     pi: ri,
                     ty: ty.AE,
@@ -69,7 +70,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                 }
             },
             {ri: ri, pi: "", structured: rn, ty: ty.CSEBase},
-            {fr: defaulAeConfig.ri})
+            {fr: defaulAeConfig.aei})
         await this.acpManager.create(
             {
                 'm2m:acp': {
