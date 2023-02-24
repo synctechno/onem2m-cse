@@ -37,7 +37,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
         }
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    protected async create(pc, targetResource, originator: string): Promise<resultData> {
         return rsc.OPERATION_NOT_ALLOWED
     }
 
@@ -55,7 +55,8 @@ export class CseBaseManager extends BaseManager<CseBase> {
             },
             {
                 ri: "", pi: "", structured: "", ty: ty.CSEBase
-            }
+            },
+            csi
         );
 
         await this.aeManager.create(
@@ -70,7 +71,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                 }
             },
             {ri: ri, pi: "", structured: rn, ty: ty.CSEBase},
-            {fr: defaulAeConfig.aei})
+            defaulAeConfig.aei)
         await this.acpManager.create(
             {
                 'm2m:acp': {
@@ -82,6 +83,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                     pvs: defaultAcpConfig.pv
                 }
             },
-            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase})
+            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase},
+            defaulAeConfig.aei)
     }
 }

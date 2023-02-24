@@ -14,7 +14,7 @@ export class BaseRepository<T extends Resource> {
         this.entityType = entityType;
     }
 
-    async create(plainResource: T, parentLookup: Lookup) {
+    async create(plainResource: T, parentLookup: Lookup, originator: string) {
         try {
             const resource: T = plainToInstance(this.entityType, plainResource)
             if (!resource.ri){
@@ -28,6 +28,7 @@ export class BaseRepository<T extends Resource> {
                     parentLookup.structured + '/' + resource.rn : resource.rn,
                 ty: new this.entityType().ty,
                 acpi: resource instanceof RegularResource ? resource.acpi : parentLookup.acpi,
+                originator
             } as Lookup);
             return data;
         } catch (e) {

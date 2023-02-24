@@ -1,7 +1,7 @@
 import {RegularResource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
-import {IsString} from "class-validator";
+import {Equals, IsOptional, IsString} from "class-validator";
 
 @Entity("flexContainer")
 export class FlexContainer extends RegularResource {
@@ -23,4 +23,9 @@ export class FlexContainer extends RegularResource {
         type: "json",
         nullable: true})
     ca: any
+
+    @IsOptional({groups: ['create']})
+    @Equals(null, {groups: ['create']})
+    @Column({nullable: true})
+    cr?: string
 }

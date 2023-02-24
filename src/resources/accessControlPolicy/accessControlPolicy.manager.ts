@@ -9,8 +9,8 @@ export class AccessControlPolicyManager extends BaseManager<AccessControlPolicy>
         super(AccessControlPolicy);
     }
 
-    public async create(pc, targetResource, options?): Promise<resultData> {
-        return super.create(pc, targetResource, options);
+    public async create(pc, targetResource, originator): Promise<resultData> {
+        return super.create(pc, targetResource, originator);
     }
 
     async checkPrivileges(originator, acpi, isAcpResource = false) {

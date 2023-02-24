@@ -5,6 +5,7 @@ import {BaseManager} from "../baseResource/base.manager.js";
 import {BaseRepository} from "../baseResource/base.repository.js";
 import {TimeSeries} from "../timeSeries/timeSeries.entity.js";
 import {TimeSeriesInstance} from "./timeSeriesInstance.entity.js";
+import {Lookup} from "../lookup/lookup.entity.js";
 
 export class TimeSeriesInstanceManager extends BaseManager<TimeSeriesInstance>{
     private readonly timeSeriesRepository: BaseRepository<TimeSeries>;
@@ -14,7 +15,7 @@ export class TimeSeriesInstanceManager extends BaseManager<TimeSeriesInstance>{
         this.timeSeriesRepository = new BaseRepository<TimeSeries>(TimeSeries);
     }
 
-    protected async create(pc: TimeSeriesInstance, targetResource, options?): Promise<resultData> {
+    protected async create(pc: TimeSeriesInstance, targetResource: Lookup, originator: string): Promise<resultData> {
         //check that the resource with the same dataGenerationTime does not exist
         const existingDgtResources = await this.repository.findBy(pc.dgt);
         if (existingDgtResources === false){
@@ -29,7 +30,7 @@ export class TimeSeriesInstanceManager extends BaseManager<TimeSeriesInstance>{
         resource.ri = nanoid(8);
         resource.cs = getContentSize(resource.con)
 
-        const data = await this.repository.create(resource, targetResource);
+        const data = await this.repository.create(resource, targetResource, originator);
 
         const parentContainer = await this.timeSeriesRepository.findOneBy(targetResource.ri);
         if (!parentContainer){

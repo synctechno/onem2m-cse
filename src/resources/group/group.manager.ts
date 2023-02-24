@@ -26,7 +26,7 @@ export class GroupManager extends BaseManager<Group> {
         this.flexContainerRepository = new BaseRepository<FlexContainer>(FlexContainer);
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const resource: Group = pc[this.prefix];
         resource.pi = targetResource.ri;
 
@@ -78,7 +78,7 @@ export class GroupManager extends BaseManager<Group> {
         }
         resource.cnm = memberIdStatusArr.length; //number of members
 
-        const data = await this.repository.create(resource, targetResource);
+        const data = await this.repository.create(resource, targetResource, originator);
         if (data === false) {
             return rsc.INTERNAL_SERVER_ERROR;
         }

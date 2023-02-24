@@ -59,7 +59,7 @@ export class Group extends RegularResource {
 
     @IsOptional({groups: ['create']})
     @Equals(null, {groups: ['create']})
-    @Column()
+    @Column({nullable: true})
     cr?: string
 
     // @Column({nullable: true})

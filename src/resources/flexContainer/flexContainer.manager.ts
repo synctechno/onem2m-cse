@@ -8,6 +8,7 @@ import {FlexContainer} from "./flexContainer.entity.js";
 import {operationEnum} from "../../types/primitives.js";
 import {plainToInstance} from "class-transformer";
 import {validate} from "class-validator";
+import {Lookup} from "../lookup/lookup.entity.js";
 
 
 const sdtCreateValidator = TypeCompiler.Compile(sdtSchemaCreate);
@@ -19,7 +20,7 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
         super(FlexContainer);
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const prefix = Object.keys(pc)[0];
         //validations
         if (!containerDefinitions.includes(pc[prefix].cnd)){
@@ -42,7 +43,7 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
             ty: resourceTypeEnum.flexContainer
         };
 
-        const data = await this.repository.create(resource, targetResource);
+        const data = await this.repository.create(resource, targetResource, originator);
         if (!data){
             return rsc.INTERNAL_SERVER_ERROR;
         }

@@ -4,6 +4,7 @@ import {BaseManager} from "../baseResource/base.manager.js";
 import {LocationPolicy} from "./locationPolicy.entity.js";
 import {BaseRepository} from "../baseResource/base.repository.js";
 import {Container} from "../container/container.entity.js";
+import {Lookup} from "../lookup/lookup.entity.js";
 
 
 export class LocationPolicyManager extends BaseManager<LocationPolicy>{
@@ -14,7 +15,7 @@ export class LocationPolicyManager extends BaseManager<LocationPolicy>{
         this.containerRepository = new BaseRepository<Container>(Container);
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
 
@@ -37,11 +38,11 @@ export class LocationPolicyManager extends BaseManager<LocationPolicy>{
             ty: resourceTypeEnum.container
         }
 
-        const lcpResource = await this.repository.create(resource, targetResource);
+        const lcpResource = await this.repository.create(resource, targetResource, originator);
         if (!lcpResource){
             return rsc.INTERNAL_SERVER_ERROR
         }
-        const cntResource = await this.containerRepository.create(containerResource, targetResource);
+        const cntResource = await this.containerRepository.create(containerResource, targetResource, originator);
         if (!cntResource){
             return rsc.INTERNAL_SERVER_ERROR
         }

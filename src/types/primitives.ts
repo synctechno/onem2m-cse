@@ -25,7 +25,7 @@ export type requestPrimitive = {
 export type requestPrimitiveData = {
     op: operationEnum,
     to: string,
-    fr?: string,
+    fr: string,
     ri: string,
     rvi: string
     ty: resourceTypeEnum,

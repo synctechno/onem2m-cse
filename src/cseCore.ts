@@ -1,7 +1,14 @@
 import {operationEnum, requestPrimitive, requestPrimitiveData, responsePrimitive} from "./types/primitives.js";
 import dataSource from "./database.js";
 import {LookupRepository} from "./resources/lookup/lookup.repository.js";
-import {filterCriteria, resourceTypeEnum, resourceTypeEnum as ty, resultData, rscEnum as rsc} from "./types/types.js";
+import {
+    filterCriteria,
+    notificationEventType,
+    resourceTypeEnum,
+    resourceTypeEnum as ty,
+    resultData,
+    rscEnum as rsc
+} from "./types/types.js";
 import {AeManager} from "./resources/ae/ae.manager.js";
 import {AccessControlPolicyManager} from "./resources/accessControlPolicy/accessControlPolicy.manager.js";
 import {FlexContainerManager} from "./resources/flexContainer/flexContainer.manager.js";
@@ -191,52 +198,52 @@ export class CseCore {
 
         switch (targetResourceType) {
             case ty.CSEBase: {
-                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, null, targetResource);
+                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, null, targetResource, requestPrimitiveData.fr );
                 break;
             }
             case ty.AE: {
                 result = await this.aeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource,
-                    {fr: requestPrimitiveData.fr});
+                    requestPrimitiveData.fr);
                 break;
             }
             case ty.accessControlPolicy: {
-                result = await this.acpManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.acpManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.flexContainer: {
-                result = await this.flexContainerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.flexContainerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.subscription: {
-                result = await this.subscriptionManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.subscriptionManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.container: {
-                result = await this.containerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.containerManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.contentInstance: {
-                result = await this.contentInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.contentInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.locationPolicy: {
-                result = await this.locationPolicyManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.locationPolicyManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.group: {
-                result = await this.groupManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.groupManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.node: {
-                result = await this.nodeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.nodeManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.timeSeries: {
-                result = await this.timeSeriesManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.timeSeriesManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.timeSeriesInstance: {
-                result = await this.timeSeriesInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource);
+                result = await this.timeSeriesInstanceManager.handleRequest(requestPrimitiveData.op, requestPrimitiveData.pc, targetResource, requestPrimitiveData.fr);
                 break;
             }
             default:

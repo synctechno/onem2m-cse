@@ -28,6 +28,6 @@ export class Subscription extends RegularResource {
 
     @IsOptional({groups: ['create']})
     @Equals(null, {groups: ['create']})
-    @Column()
+    @Column({nullable: true})
     cr?: string
 }

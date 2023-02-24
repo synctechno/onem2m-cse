@@ -21,6 +21,6 @@ export class ContentInstance extends Resource {
 
     @IsOptional({groups: ['create']})
     @Equals(null, {groups: ['create']})
-    @Column()
+    @Column({nullable: true})
     cr?: string
 }

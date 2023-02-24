@@ -23,6 +23,6 @@ export class Container extends RegularResource {
 
     @IsOptional({groups: ['create']})
     @Equals(null, {groups: ['create']})
-    @Column()
+    @Column({nullable: true})
     cr?: string
 }

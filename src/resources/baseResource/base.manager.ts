@@ -5,6 +5,7 @@ import {Resource} from "./base.entity.js";
 import {resourceTypeToPrefix} from "../../utils.js";
 import {plainToInstance} from "class-transformer";
 import {validate} from "class-validator";
+import {Lookup} from "../lookup/lookup.entity.js";
 
 export abstract class BaseManager<T extends Resource> {
     protected readonly repository: BaseRepository<T>;
@@ -17,10 +18,10 @@ export abstract class BaseManager<T extends Resource> {
         this.prefix = resourceTypeToPrefix.get(new this.entityType().ty);
     }
 
-    async handleRequest(op: operationEnum, pc, targetResource, options?): Promise<resultData> {
+    async handleRequest(op: operationEnum, pc, targetResource: Lookup, originator: string): Promise<resultData> {
         switch (op) {
             case operationEnum.CREATE: {
-                return this.create(pc, targetResource, options);
+                return this.create(pc, targetResource, originator);
             }
             case operationEnum.RETRIEVE: {
                 return this.retrieve(targetResource);
@@ -37,11 +38,11 @@ export abstract class BaseManager<T extends Resource> {
         }
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData>{
+    protected async create(pc, targetResource, originator): Promise<resultData>{
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
 
-        const data = await this.repository.create(resource, targetResource);
+        const data = await this.repository.create(resource, targetResource, originator);
         if (data === false) {
             return rsc.INTERNAL_SERVER_ERROR;
         }

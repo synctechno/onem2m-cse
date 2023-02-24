@@ -5,6 +5,7 @@ import {Container} from "../container/container.entity.js";
 import {BaseManager} from "../baseResource/base.manager.js";
 import {ContentInstance} from "./contentInstance.entity.js";
 import {BaseRepository} from "../baseResource/base.repository.js";
+import {Lookup} from "../lookup/lookup.entity.js";
 
 export class ContentInstanceManager extends BaseManager<ContentInstance>{
     private readonly containerRepository: BaseRepository<Container>;
@@ -14,14 +15,14 @@ export class ContentInstanceManager extends BaseManager<ContentInstance>{
         this.containerRepository = new BaseRepository<Container>(Container);
     }
 
-    protected async create(pc, targetResource, options?): Promise<resultData> {
+    protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const resource: any = pc[this.prefix];
         resource.pi = targetResource.ri;
         resource.rn = 'cin_' + nanoid(8)
         resource.ri = nanoid(8);
         resource.cs = getContentSize(resource.con)
 
-        const data = await this.repository.create(resource, targetResource);
+        const data = await this.repository.create(resource, targetResource, originator);
 
         const parentContainer = await this.containerRepository.findOneBy(targetResource.ri);
         if (!parentContainer){
