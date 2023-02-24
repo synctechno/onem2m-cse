@@ -1,7 +1,7 @@
 import {Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn} from "typeorm";
 import {resourceTypeEnum} from "../../types/types.js";
 import {IsArray, IsOptional, IsString} from "class-validator";
-import {Exclude, Expose} from "class-transformer";
+import {Exclude} from "class-transformer";
 
 @Exclude()
 @Entity()
@@ -9,6 +9,7 @@ export abstract class Resource {
     @PrimaryColumn()
     public ri: string
 
+    @IsOptional({groups: ['create']})
     @IsString({groups: ['create']})
     @Column("varchar", {nullable: true})
     public readonly rn: string;

@@ -1,7 +1,7 @@
 import {RegularResource} from "../baseResource/base.entity.js";
 import {consistencyStrategy, resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
-import {IsArray, IsEnum, IsInt, IsOptional, IsString} from "class-validator";
+import {Equals, IsArray, IsEnum, IsInt, IsOptional, IsString} from "class-validator";
 
 @Entity("group")
 export class Group extends RegularResource {
@@ -56,6 +56,11 @@ export class Group extends RegularResource {
     @IsString({groups: ['create', 'update']})
     @Column({nullable: true})
     gn: string //groupName
+
+    @IsOptional({groups: ['create']})
+    @Equals(null, {groups: ['create']})
+    @Column()
+    cr?: string
 
     // @Column({nullable: true})
     // ssi: string //semanticSupportIndicator

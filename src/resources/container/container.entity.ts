@@ -1,6 +1,7 @@
 import {RegularResource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js";
 import {Column, Entity} from "typeorm";
+import {Equals, IsOptional} from "class-validator";
 
 @Entity("container")
 export class Container extends RegularResource {
@@ -19,4 +20,9 @@ export class Container extends RegularResource {
 
     @Column({nullable: true})
     li: string
+
+    @IsOptional({groups: ['create']})
+    @Equals(null, {groups: ['create']})
+    @Column()
+    cr?: string
 }

@@ -2,7 +2,7 @@ import {RegularResource} from "../baseResource/base.entity.js";
 import {eventNotificationCriteria, resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
 import {Type} from "class-transformer";
-import {IsNotEmptyObject, IsString, ValidateNested} from "class-validator";
+import {Equals, IsNotEmptyObject, IsOptional, IsString, ValidateNested} from "class-validator";
 import {EventNotificationCriteria} from "../../validationClasses.js";
 
 @Entity("subscription")
@@ -25,4 +25,9 @@ export class Subscription extends RegularResource {
     @IsString({each: true, groups: ['create', 'update']})
     @Column("simple-array")
     nu: string[] //notificationURI
+
+    @IsOptional({groups: ['create']})
+    @Equals(null, {groups: ['create']})
+    @Column()
+    cr?: string
 }
