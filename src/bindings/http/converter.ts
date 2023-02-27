@@ -1,5 +1,6 @@
 import {operationEnum, requestPrimitive, responsePrimitive} from "../../types/primitives.js";
 import {filterCriteria} from "../../types/types.js";
+import {nanoid} from "nanoid";
 
 export function httpToPrimitive(req, ty?): requestPrimitive {
     const methodToOp = {
@@ -36,7 +37,7 @@ export function httpToPrimitive(req, ty?): requestPrimitive {
     }
 }
 
-export function primitiveToHtpp(primitive: responsePrimitive) {
+export function responsePrimitiveToHtpp(primitive: responsePrimitive) {
     const body = primitive["m2m:rsp"].pc;
 
     return {
@@ -48,6 +49,19 @@ export function primitiveToHtpp(primitive: responsePrimitive) {
         },
         body: [2000, 2001, 2002, 2004].includes(primitive["m2m:rsp"].rsc) ? body : undefined,
         statusCode: statusCode.get(primitive["m2m:rsp"].rsc)
+    }
+}
+
+export function requestPrimitiveToHtpp(requestPrimitive: requestPrimitive) {
+    return {
+        headers: {
+            "Content-Type": 'application/json',
+            "X-M2M-Origin": requestPrimitive["m2m:rqp"].fr!,
+            "X-M2M-RI": nanoid(10),
+            "X-M2M-RVI": requestPrimitive["m2m:rqp"].rvi,
+            "X-M2M-OT": (new Date()).toDateString()
+        },
+        body: requestPrimitive["m2m:rqp"].pc ? requestPrimitive["m2m:rqp"].pc : undefined,
     }
 }
 

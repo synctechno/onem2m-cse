@@ -54,7 +54,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                 ri, rn, csi, pi, srv, poa, srt, ty: ty.CSEBase,
             },
             {
-                ri: "", pi: "", structured: "", ty: ty.CSEBase
+                ri: "", pi: "", structured: "", ty: ty.CSEBase, originator: ""
             },
             csi
         );
@@ -70,7 +70,7 @@ export class CseBaseManager extends BaseManager<CseBase> {
                     rr: true
                 }
             },
-            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase},
+            {ri: ri, pi: "", structured: rn, ty: ty.CSEBase, originator: ""},
             defaulAeConfig.aei)
         await this.acpManager.create(
             {

@@ -24,6 +24,9 @@ import {GroupManager} from "./resources/group/group.manager.js";
 import {NodeManager} from "./resources/node/node.manager.js";
 import {TimeSeriesManager} from "./resources/timeSeries/timeSeries.manager.js";
 import {TimeSeriesInstanceManager} from "./resources/timeSeriesInstance/timeSeriesInstance.manager.js";
+import {nanoid} from "nanoid";
+import {request as mqttRequest} from "./bindings/mqtt/request.js";
+import {request as httpRequest} from "./bindings/http/request.js"
 
 export class CseCore {
     private lookupRepository: LookupRepository;
@@ -78,12 +81,12 @@ export class CseCore {
     }
 
     async process(requestPrimitiveData: requestPrimitiveData): Promise<resultData> {
-        if (requestPrimitiveData.op === operationEnum.CREATE || requestPrimitiveData.op === operationEnum.UPDATE){
+        if (requestPrimitiveData.op === operationEnum.CREATE || requestPrimitiveData.op === operationEnum.UPDATE) {
             const validateResult = await this.validate(requestPrimitiveData.pc, requestPrimitiveData.ty, requestPrimitiveData.op);
-            if (typeof validateResult === 'number'){
+            if (typeof validateResult === 'number') {
                 return validateResult;
             }
-            if (!validateResult){
+            if (!validateResult) {
                 return rsc.BAD_REQUEST;
             }
         }
@@ -194,11 +197,13 @@ export class CseCore {
             }
         }
 
+        const subs = await this.checkSubscriptions(targetResource.ri);
+
         let result: resultData;
 
         switch (targetResourceType) {
             case ty.CSEBase: {
-                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, null, targetResource, requestPrimitiveData.fr );
+                result = await this.cseBaseManager.handleRequest(requestPrimitiveData.op, null, targetResource, requestPrimitiveData.fr);
                 break;
             }
             case ty.AE: {
@@ -250,48 +255,65 @@ export class CseCore {
                 return rsc.NOT_IMPLEMENTED;
         }
 
-        const resultRsc = typeof result === "number" ? result : result.rsc
+        let resultRsc: number;
+        let resultPc: any;
+        if (typeof result === "number") {
+            resultRsc = result;
+        } else {
+            resultRsc = result.rsc;
+            resultPc = result.pc
+        }
 
         if (![rsc.OK, rsc.CREATED, rsc.UPDATED, rsc.DELETED].includes(resultRsc)) {
             return result;
         }
 
-        const subs = await this.checkSubscriptions(targetResource.ri);
-
-        if (typeof subs === "number") {
-            return subs;
+        if (typeof subs === "number" || subs.length === 0) {
+            return result;
         }
-        //TODO need to refactor this part, add support for other notificationEventTypes
-        // for (const sub of subs) {
-        //     if ((sub.enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)
-        //         || (sub.enc.net?.includes(notificationEventType.CREATE) && requestPrimitiveData.op === operationEnum.CREATE)) {
-        //         const prefix: any = resourceTypeToPrefix.get(targetResource.ty)
-        //         const pc = {
-        //             "m2m:sgn": {
-        //                 nev:{
-        //                     rep: {
-        //                         [prefix]: result.pc //TODO need to fix
-        //                     },
-        //                     net: sub.enc.net
-        //                 },
-        //                 sur: sub.ri
-        //             }
-        //         }
-        //         for (const notificationUrl of sub.nu){
-        //             request({
-        //                 "m2m:rqp": {
-        //                     op: operationEnum.NOTIFY,
-        //                     fr: cseConfig.cseId,
-        //                     to: notificationUrl,
-        //                     ri: nanoid(10),
-        //                     rvi: 3,
-        //                     ty: targetResource.ty,
-        //                     pc: pc
-        //                 }
-        //             })
-        //         }
-        //     }
-        // }
+        let subsOrigins: string[] = [];
+        for (let sub of subs) {
+            const lookupResult = await this.lookupRepository.findOneBy({ri: sub.ri})
+            if (lookupResult) subsOrigins.push(lookupResult.originator)
+            else return result;
+        }
+
+        for (let i = 0; i < subs.length; i++) {
+            if ((subs[i].enc.net?.includes(notificationEventType.UPDATE) && requestPrimitiveData.op === operationEnum.UPDATE)
+                || (subs[i].enc.net?.includes(notificationEventType.CREATE) && requestPrimitiveData.op === operationEnum.CREATE)
+                || (subs[i].enc.net?.includes(notificationEventType.DELETE) && requestPrimitiveData.op === operationEnum.DELETE)) {
+                const pc = {
+                    "m2m:sgn": {
+                        nev: {
+                            rep: {
+                                ...resultPc
+                            },
+                            net: requestPrimitiveData.op
+                        },
+                        sur: subs[i].ri
+                    }
+                }
+
+                for (const notificationUrl of subs[i].nu) {
+                    const notifPrimitive = {
+                        "m2m:rqp": {
+                            op: operationEnum.NOTIFY,
+                            fr: cseConfig.cseId,
+                            to: subsOrigins[i],
+                            ri: nanoid(10),
+                            rvi: 3,
+                            ty: targetResource.ty,
+                            pc: pc
+                        }
+                    }
+                    if (notificationUrl.startsWith('mqtt')){
+                        await mqttRequest(notificationUrl, notifPrimitive)
+                    } else if (notificationUrl.startsWith('http')){
+                        await httpRequest(notificationUrl, notifPrimitive)
+                    }
+                }
+            }
+        }
         return result;
     }
 
@@ -457,7 +479,7 @@ export class CseCore {
         }
     }
 
-    async handleFoptRequest(requestPrimitiveData: requestPrimitiveData, targetResource: Lookup, options?): Promise<resultData> {
+    async handleFoptRequest(requestPrimitiveData: requestPrimitiveData, targetResource: Lookup): Promise<resultData> {
         const group = await this.getResource(targetResource.ri, resourceTypeEnum.group)
         if (!group) {
             return rsc.NOT_FOUND;
@@ -491,9 +513,9 @@ export class CseCore {
         }
     }
 
-    validate(resource, ty: resourceTypeEnum, op: operationEnum){
-        switch (ty){
-            case resourceTypeEnum.AE:{
+    validate(resource, ty: resourceTypeEnum, op: operationEnum) {
+        switch (ty) {
+            case resourceTypeEnum.AE: {
                 return this.aeManager.validate(resource, op);
             }
             case resourceTypeEnum.accessControlPolicy: {

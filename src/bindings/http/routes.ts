@@ -1,6 +1,6 @@
 import {headerSchema} from "./schemas.js";
 import {resourceTypeEnum} from "../../types/types.js";
-import {httpToPrimitive, primitiveToHtpp} from "./converter.js";
+import {httpToPrimitive, responsePrimitiveToHtpp} from "./converter.js";
 import {responsePrimitive} from "../../types/primitives.js";
 import {cseCore} from "../../index.js";
 
