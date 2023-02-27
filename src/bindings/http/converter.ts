@@ -28,7 +28,7 @@ export function httpToPrimitive(req, ty?): requestPrimitive {
             op,
             to: pathToTo(urlParts[0]),
             fr: req.headers['x-m2m-origin'],
-            ri: req.headers['x-m2m-ri'],
+            rqi: req.headers['x-m2m-ri'],
             rvi: req.headers['x-m2m-rvi'],
             ty: ty,
             pc: req.body,

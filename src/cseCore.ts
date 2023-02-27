@@ -72,7 +72,7 @@ export class CseCore {
         return {
             "m2m:rsp": {
                 rsc,
-                rqi: primitiveData.ri,
+                rqi: primitiveData.rqi,
                 rvi: primitiveData.rvi,
                 ot: new Date(),
                 pc
@@ -190,8 +190,8 @@ export class CseCore {
         const targetResourceType: resourceTypeEnum = requestPrimitiveData.op === operationEnum.CREATE ?
             requestPrimitiveData.ty : targetResource.ty
 
-        if (requestPrimitiveData.op === operationEnum.RETRIEVE && Object.keys(requestPrimitiveData.fc as Object).length !== 0) {
-            const pc = await this.discoveryProcedure(requestPrimitiveData.fc!, targetResource.ri);
+        if (requestPrimitiveData.op === operationEnum.RETRIEVE && requestPrimitiveData.fc) {
+            const pc = await this.discoveryProcedure(requestPrimitiveData.fc, targetResource.ri);
             if (pc) {
                 return {pc, rsc: rsc.OK}
             }

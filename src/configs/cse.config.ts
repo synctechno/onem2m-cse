@@ -21,3 +21,11 @@ export const defaultAcpConfig = {
         }]
     }
 }
+
+export const mqttConfig = {
+    url: 'mqtt://localhost:1883',
+    options: {
+        username: undefined,
+        password: undefined,
+    }
+}
