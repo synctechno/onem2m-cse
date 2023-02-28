@@ -1,7 +1,7 @@
 import {RegularResource} from "../baseResource/base.entity.js";
 import {resourceTypeEnum} from "../../types/types.js"
 import {Column, Entity} from "typeorm";
-import {Equals, IsOptional, IsString} from "class-validator";
+import {Equals, IsInt, IsOptional, IsString} from "class-validator";
 
 @Entity("flexContainer")
 export class FlexContainer extends RegularResource {
@@ -13,7 +13,7 @@ export class FlexContainer extends RegularResource {
     ty? = resourceTypeEnum.flexContainer;
 
     @IsString({groups: ['create']})
-    @Column({nullable: true})
+    @Column()
     cnd: string
 
     @Column()
@@ -28,4 +28,28 @@ export class FlexContainer extends RegularResource {
     @Equals(null, {groups: ['create']})
     @Column({nullable: true})
     cr?: string
+
+    @Column()
+    _prefix: string
+}
+
+class ModuleColor extends FlexContainer{
+    @Equals('org.onem2m.common.moduleclass.colour', {groups: ['create']})
+    declare cnd: string
+
+    @IsOptional({groups: ['update']})
+    @IsInt({groups: ['create', 'update']})
+    red: number
+
+    @IsOptional({groups: ['update']})
+    @IsInt({groups: ['create', 'update']})
+    green: number
+
+    @IsOptional({groups: ['update']})
+    @IsInt({groups: ['create', 'update']})
+    blue: number
+}
+
+export const sdtPrefixMap: Record<string, {new(): FlexContainer}> = {
+    'cod:color': ModuleColor,
 }

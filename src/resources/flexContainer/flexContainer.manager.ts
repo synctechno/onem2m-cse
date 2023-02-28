@@ -1,19 +1,12 @@
-import {resourceTypeEnum, resultData, rscEnum, rscEnum as rsc} from "../../types/types.js";
+import {resourceTypeEnum, resultData, rscEnum as rsc} from "../../types/types.js";
 import {nanoid} from "nanoid";
 import {getContentSize} from "../../utils.js";
-import {TypeCompiler} from '@sinclair/typebox/compiler'
-import {containerDefinitions, sdtSchemaCreate, sdtSchemaUpdate} from "../../types/sdt.js";
 import {BaseManager} from "../baseResource/base.manager.js";
-import {FlexContainer} from "./flexContainer.entity.js";
+import {FlexContainer, sdtPrefixMap} from "./flexContainer.entity.js";
 import {operationEnum} from "../../types/primitives.js";
 import {plainToInstance} from "class-transformer";
 import {validate} from "class-validator";
 import {Lookup} from "../lookup/lookup.entity.js";
-
-
-const sdtCreateValidator = TypeCompiler.Compile(sdtSchemaCreate);
-const sdtUpdateValidator = TypeCompiler.Compile(sdtSchemaUpdate);
-
 
 export class FlexContainerManager extends BaseManager<FlexContainer>{
     constructor() {
@@ -22,13 +15,6 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
 
     protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const prefix = Object.keys(pc)[0];
-        //validations
-        if (!containerDefinitions.includes(pc[prefix].cnd)){
-            return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
-        }
-        if (!sdtCreateValidator.Check(pc)){
-            return rsc.BAD_REQUEST;
-        }
 
         const {rn, cnd, ...ca} = pc[prefix];
         const ri = nanoid(8)
@@ -40,6 +26,7 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
             cnd,
             ca,
             cs: getContentSize(ca),
+            _prefix: prefix,
             ty: resourceTypeEnum.flexContainer
         };
 
@@ -47,11 +34,11 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
         if (!data){
             return rsc.INTERNAL_SERVER_ERROR;
         }
-        const {ca: caFromDb, ...rest} = data;
+        const {ca: caFromDb, _prefix, ...rest} = data;
 
         return {
             rsc: rsc.CREATED,
-            pc: {...rest, ...caFromDb}
+            pc: {[prefix]: {...rest, ...caFromDb}}
         }
     }
 
@@ -60,25 +47,19 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
         if (!data){
             return rsc.INTERNAL_SERVER_ERROR;
         }
-        const {ca: caFromDb, ...rest} = data;
+        const {ca: caFromDb, _prefix: prefix, ...rest} = data;
         if (!rest){
             return rsc.NOT_FOUND;
         }
         return {
             rsc: rsc.OK,
-            pc: {"m2m:fcnt": {...rest, ...caFromDb}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
+            pc: {prefix: {...rest, ...caFromDb}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
         }
     }
 
     protected async update(pc, targetResource): Promise<resultData> {
         const prefix = Object.keys(pc)[0];
-        //validations
-        if (!containerDefinitions.includes(pc[prefix].cnd)){
-            return rscEnum.SPECIALIZATION_SCHEMA_NOT_FOUND;
-        }
-        if (!sdtUpdateValidator.Check(pc)){
-            return rsc.BAD_REQUEST;
-        }
+
         const {rn, cnd, ...ca} = pc[prefix];
 
         const data = await this.repository.findOneBy(targetResource.ri);
@@ -100,10 +81,10 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
         if (!updateResult){
             return rsc.INTERNAL_SERVER_ERROR;
         }
-        const {ca: savedCa, ...savedRest} = updateResult;
+        const {ca: savedCa, _prefix, ...savedRest} = updateResult;
         return {
             rsc: rsc.UPDATED,
-            pc: {"m2m:fcnt": {...savedRest, ...savedCa}} //TODO fix prefix to the right specialization prefix, e.g. add prefix column to database
+            pc: {[prefix]: {...savedRest, ...savedCa}}
         }
     }
 
@@ -117,9 +98,12 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
     }
 
     async validate(resource, op: operationEnum){
-        if (!resource.hasOwnProperty(this.prefix)){
+        const sdtPrefixes = Object.getOwnPropertyNames(sdtPrefixMap);
+        const resourcePrefix = Object.getOwnPropertyNames(resource)[0];
+        if (!sdtPrefixes.includes(resourcePrefix)){
             return rsc.BAD_REQUEST;
         }
+
         let opString;
         switch (op){
             case operationEnum.CREATE:{
@@ -135,12 +119,12 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
             }
         }
         try {
-            const obj = plainToInstance<FlexContainer, Object>(FlexContainer, resource[this.prefix] as Object, { });
+            const obj = plainToInstance(sdtPrefixMap[resourcePrefix], resource[resourcePrefix]);
             Object.keys(obj).forEach(key => obj[key] === undefined ? delete obj[key] : {});
             if (obj.ty){
                 delete obj.ty;
             }
-            const validateResult = await validate(obj)
+            const validateResult = await validate(obj, {groups: [opString], whitelist: true, forbidNonWhitelisted: true })
             return validateResult.length === 0;
         } catch (e){
             console.log(e);
