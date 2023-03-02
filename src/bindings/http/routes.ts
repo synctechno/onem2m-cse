@@ -5,6 +5,16 @@ import {responsePrimitive} from "../../types/primitives.js";
 import {cseCore} from "../../index.js";
 
 export const router = (fastify, options, done) => {
+    fastify.addHook('onRequest', (request, reply, done) => {
+        const type = request.headers['content-type']
+        if(type.startsWith('application/vnd.onem2m-res+json')){
+            request.headers['content-type'] =
+                request.headers['content-type'].replace('application/vnd.onem2m-res+json', 'application/json')
+        }
+        done()
+    })
+    done()
+
     fastify.all(`/*`, {
         schema: {
             headers: headerSchema
