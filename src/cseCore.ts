@@ -272,9 +272,13 @@ export class CseCore {
             return result;
         }
         let subsOrigins: string[] = [];
+        let subsReferences: string[] = [];
         for (let sub of subs) {
             const lookupResult = await this.lookupRepository.findOneBy({ri: sub.ri})
-            if (lookupResult) subsOrigins.push(lookupResult.originator)
+            if (lookupResult) {
+                subsOrigins.push(lookupResult.originator)
+                subsReferences.push(lookupResult.structured)
+            }
             else return result;
         }
 
@@ -290,7 +294,7 @@ export class CseCore {
                             },
                             net: requestPrimitiveData.op
                         },
-                        sur: subs[i].ri
+                        sur: subsReferences[i]
                     }
                 }
 

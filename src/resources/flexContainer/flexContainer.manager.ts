@@ -16,7 +16,7 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
     protected async create(pc, targetResource: Lookup, originator: string): Promise<resultData> {
         const prefix = Object.keys(pc)[0];
 
-        const {rn, cnd, ...ca} = pc[prefix];
+        const {rn, cnd, lbl, ...ca} = pc[prefix];
         const ri = nanoid(8)
         //copy without reference
         let resource = {
@@ -26,6 +26,7 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
             cnd,
             ca,
             cs: getContentSize(ca),
+            lbl,
             _prefix: prefix,
             ty: resourceTypeEnum.flexContainer
         };
@@ -60,24 +61,24 @@ export class FlexContainerManager extends BaseManager<FlexContainer>{
     protected async update(pc, targetResource): Promise<resultData> {
         const prefix = Object.keys(pc)[0];
 
-        const {rn, cnd, ...ca} = pc[prefix];
+        const {lbl, ...ca} = pc[prefix];
 
-        const data = await this.repository.findOneBy(targetResource.ri);
-        if (!data){
+        const resource = await this.repository.findOneBy(targetResource.ri);
+        if (!resource){
             return rsc.INTERNAL_SERVER_ERROR;
         }
-        let {ca: caFromDb, ...rest} = data;
+        let {ca: caFromDb, ...rest} = resource;
         const updatedCa = {...caFromDb, ...ca};
 
         if (ca){
-            data.ca = updatedCa;
-            data.cs = getContentSize(updatedCa)
+            resource.ca = updatedCa;
+            resource.cs = getContentSize(updatedCa)
         }
-        if (cnd) {
-            data.cnd = cnd;
+        if (lbl) {
+            resource.lbl = lbl;
         }
 
-        const updateResult = await this.repository.update(data, targetResource.ri);
+        const updateResult = await this.repository.update(resource, targetResource.ri);
         if (!updateResult){
             return rsc.INTERNAL_SERVER_ERROR;
         }

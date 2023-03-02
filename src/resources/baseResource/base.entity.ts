@@ -26,7 +26,7 @@ export abstract class Resource {
     @IsOptional({groups: ['create', 'update']})
     @IsArray({groups: ['create', 'update']})
     @Column('varchar',{nullable: true, array: true})
-    readonly lbl?: string[];
+    lbl?: string[];
 
     @Exclude()
     ty?: resourceTypeEnum;
